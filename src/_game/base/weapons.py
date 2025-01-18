@@ -1,7 +1,7 @@
 from typing import Union, List
 
-from game.base.functionality import empty_set_or_set_of_dataclasses
-from game.base.stats_abilities_and_settings import Abilities, DamageType, AbilityScoreTracker, WeaponType, \
+from _game.base.functionality import empty_set_or_set_of_dataclasses
+from _game.base.stats_abilities_and_settings import Abilities, DamageType, AbilityScoreTracker, WeaponType, \
     WeaponProperties
 
 

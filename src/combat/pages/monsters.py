@@ -1,7 +1,7 @@
 import streamlit as st
 
-from game.entities.entities.monsters import PredefinedMonsters
-from game.entities.base.enemy_base_sheet import Enemy
+from _game.entities.entities.monsters import PredefinedMonsters
+from _game.entities.base.enemy_base_sheet import Enemy
 
 def main_monsters():
 

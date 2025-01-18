@@ -3,7 +3,7 @@ from dataclasses import dataclass, field
 from collections import defaultdict
 from typing import Dict
 
-from game.base.stats_abilities_and_settings import DamageType
+from _game.base.stats_abilities_and_settings import DamageType
 
 
 @dataclass

@@ -1,16 +1,9 @@
-from typing import Optional, List, Union, Dict
-from copy import copy
+from typing import Union, Optional, List
 
-from game.base.functionality import roll_dice, empty_set_or_set_of_dataclasses, \
-    emtpy_list_or_list_of_dataclasses
-from game.base.stats_abilities_and_settings import Abilities, Skills, AbilityScoreTracker, SkillScoreTracker, \
-    DamageType, WeaponType, WeaponProperties, Size
-from game.base.weapons import BaseWeapon
-from game.entities.base.action import Action, ActionType
-from game.entities.base.entity import HitPointTracker, BattleTrackerMetaData, Entity
+from _game.entities.base.entity import Entity, HitPointTracker
+from _game.base.stats_abilities_and_settings import Skills, Abilities, WeaponType, DamageType, Size
 
-
-class Enemy(Entity):
+class Player(Entity):
 
     def __init__(self,
                  race: str,

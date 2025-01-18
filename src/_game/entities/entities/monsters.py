@@ -1,9 +1,9 @@
 import random
 
-from game.entities.base.enemy_base_sheet import Enemy, Skills
-from game.entities.base.entity import HitPointTracker
-from game.base.weapons import Weapons
-from game.base.stats_abilities_and_settings import Size
+from _game.entities.base.enemy_base_sheet import Enemy, Skills
+from _game.entities.base.entity import HitPointTracker
+from _game.base.weapons import Weapons
+from _game.base.stats_abilities_and_settings import Size
 
 name_set = {
     "Bowelclaw", "Grimeby", "Horbug", "Mudmuncher", "Bloodspike", "Thornfist",

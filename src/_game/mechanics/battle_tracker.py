@@ -5,14 +5,14 @@ from collections import defaultdict
 
 import streamlit as st
 
-from game.base.environment import EnvironmentSquare, Environment, LocationMetric
-from game.base.functionality import RollInfo
-from game.base.stats_abilities_and_settings import WeaponProperties
-from game.base.weapons import BaseWeapon
-from game.entities.base.player_base_sheet import Player
-from game.entities.base.enemy_base_sheet import Enemy
-from game.entities.base.action import Action, ActionType
-from game.base.environment import Location
+from _game.base.environment import EnvironmentSquare, Environment, LocationMetric
+from _game.base.functionality import RollInfo
+from _game.base.stats_abilities_and_settings import WeaponProperties
+from _game.base.weapons import BaseWeapon
+from _game.entities.base.player_base_sheet import Player
+from _game.entities.base.enemy_base_sheet import Enemy
+from _game.entities.base.action import Action, ActionType
+from _game.base.environment import Location
 
 
 class Battletracker:

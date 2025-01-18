@@ -2,13 +2,13 @@ import streamlit as st
 from itertools import chain
 from copy import deepcopy
 
-from src.game.base.environment import LocationMetric, Location
-from src.game.base.weapons import Weapons
-from src.game.entities.base.action import Action
-from src.game.entities.base.enemy_base_sheet import Enemy
-from src.game.entities.entities.monsters import PredefinedMonsters
-from src.game.base.functionality import roll_dice
-from src.game.mechanics.battle_tracker import Battletracker
+from src._game.base.environment import LocationMetric, Location
+from src._game.base.weapons import Weapons
+from src._game.entities.base.action import Action
+from src._game.entities.base.enemy_base_sheet import Enemy
+from src._game.entities.entities.monsters import PredefinedMonsters
+from src._game.base.functionality import roll_dice
+from src._game.mechanics.battle_tracker import Battletracker
 
 def page_set_up_add(bt) -> Battletracker:
 

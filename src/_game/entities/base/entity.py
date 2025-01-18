@@ -3,15 +3,15 @@ from dataclasses import dataclass, field
 from typing import Optional, List, Union, Dict
 from copy import copy
 
-from game.base.environment import Location
-from game.base.functionality import roll_dice, RollInfo
-from game.entities.base.action import Action
-from game.base.functionality import roll_dice, empty_set_or_set_of_dataclasses, \
+from _game.base.environment import Location
+from _game.base.functionality import roll_dice, RollInfo
+from _game.entities.base.action import Action
+from _game.base.functionality import roll_dice, empty_set_or_set_of_dataclasses, \
     emtpy_list_or_list_of_dataclasses
-from game.base.stats_abilities_and_settings import Abilities, Skills, AbilityScoreTracker, SkillScoreTracker, \
+from _game.base.stats_abilities_and_settings import Abilities, Skills, AbilityScoreTracker, SkillScoreTracker, \
     DamageType, WeaponType, WeaponProperties, Size
-from game.base.weapons import BaseWeapon
-from game.entities.base.action import Action, ActionType
+from _game.base.weapons import BaseWeapon
+from _game.entities.base.action import Action, ActionType
 
 
 @dataclass

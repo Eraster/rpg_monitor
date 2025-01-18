@@ -5,7 +5,7 @@ from typing import Optional, Dict, List
 from enum import Enum, auto
 from dataclasses import dataclass, field
 
-from game.base.weapons import BaseWeapon
+from _game.base.weapons import BaseWeapon
 
 
 class LocationMetric(Enum):

@@ -1,8 +1,8 @@
-from game.base.environment import Location, LocationMetric
-from game.base.weapons import Weapons
-from game.entities.base.action import ActionType
-from game.entities.entities.monsters import ALL_MONSTERS
-from game.mechanics.battle_tracker import Battletracker
+from _game.base.environment import Location, LocationMetric
+from _game.base.weapons import Weapons
+from _game.entities.base.action import ActionType
+from _game.entities.entities.monsters import ALL_MONSTERS
+from _game.mechanics.battle_tracker import Battletracker
 
 if __name__ == '__main__':
     bt = Battletracker()

@@ -4,10 +4,10 @@ from enum import Enum, auto
 from typing import Optional, Union, List, Set
 from copy import deepcopy
 
-from game.base.stats_abilities_and_settings import DamageType, WeaponProperties
-from game.base.functionality import RollInfo
-from game.base.weapons import Weapons, BaseWeapon
-from game.base.functionality import roll_dice, RollInfo
+from _game.base.stats_abilities_and_settings import DamageType, WeaponProperties
+from _game.base.functionality import RollInfo
+from _game.base.weapons import Weapons, BaseWeapon
+from _game.base.functionality import roll_dice, RollInfo
 
 class ActionType(Enum):
     WEAPON_ATTACK_MELEE = auto()

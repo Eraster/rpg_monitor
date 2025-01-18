@@ -1,7 +1,7 @@
 import streamlit as st
 import os
 
-from streamlit_app.combat.pages.monsters import main_monsters
+from combat.pages.monsters import main_monsters
 
 CURRENT_DIRECTORY = os.path.join("streamlit_app", "combat", "pages")
 
