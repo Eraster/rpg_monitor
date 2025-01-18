@@ -127,6 +127,7 @@ def page_play_order(bt) -> Battletracker:
             for key, values in placements.items():
                 bt.place_enemy(key, x=values['x'], y=values['y'], metric=metric)
             st.write("Data Processed succesfully.")
+            st.write("Click again to enable 'Battle' Sidebar functionality.")
         else:
             st.warning("No data entered.")
 
@@ -143,6 +144,7 @@ def page_battle(bt) -> Battletracker:
         st.write(current_entity.description_short())
 
     if bt.current_entity is None:
+        st.write(f"Continue with first round for usage.")
         return bt
 
     actions = bt.get_actions(source=bt.current_entity)
