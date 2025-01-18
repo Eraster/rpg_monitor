@@ -1,8 +1,7 @@
 from __future__ import annotations
 
-from collections import defaultdict
-from typing import Optional, Dict, List
-from enum import Enum, auto
+from typing import Dict, List
+from enum import Enum
 from dataclasses import dataclass, field
 
 from _game.base.weapons import BaseWeapon

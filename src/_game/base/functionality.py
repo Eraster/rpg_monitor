@@ -3,8 +3,6 @@ from dataclasses import dataclass, field
 from collections import defaultdict
 from typing import Dict
 
-from _game.base.stats_abilities_and_settings import DamageType
-
 
 @dataclass
 class RollInfo:
