@@ -1,9 +1,9 @@
 import streamlit as st
 
-from streamlit_app.battle_tracker.battle_tracker import main_battle_tracker
-from streamlit_app.history.history import main_history
-from streamlit_app.combat.combat import main_combat
-from streamlit_app.tests.test import main_test
+from src.streamlit_app.battle_tracker.battle_tracker import main_battle_tracker
+from src.streamlit_app.history.history import main_history
+from src.streamlit_app.combat.combat import main_combat
+from src.streamlit_app.tests.test import main_test
 
 # Sidebar to select page
 
