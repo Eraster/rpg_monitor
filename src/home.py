@@ -3,7 +3,6 @@ import streamlit as st
 from battle_tracker.battle_tracker import main_battle_tracker
 from history.history import main_history
 from combat.combat import main_combat
-from tests.test import main_test
 
 # Sidebar to select page
 
@@ -15,7 +14,7 @@ st.set_page_config(
 if "counter" not in st.session_state:
     st.session_state.counter = 0
 
-page = st.sidebar.selectbox("Type", ["Home", "History", "Combat", "Battle Tracker", "Tests"])
+page = st.sidebar.selectbox("Type", ["Home", "History", "Combat", "Battle Tracker"])
 
 def home():
     st.title(f"DND 5e campaign monitor")
@@ -51,5 +50,3 @@ elif page == "Combat":
     main_combat()
 elif page == "Battle Tracker":
     main_battle_tracker()
-elif page == "Tests":
-    main_test()
