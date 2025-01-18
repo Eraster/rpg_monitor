@@ -121,7 +121,7 @@ class Action:
             ActionType.WEAPON_ATTACK_RANGED,
             ActionType.WEAPON_ATTACK_THROW
         }:
-            return f"{self.action_type}" + self.weapon.description_short + (
+            return f"{self.action_type.name} " + self.weapon.description_short + (
                 f"{', advantage' if self.advantage and not self.disadvantage else ''}"
                 f"{', disadvantage' if self.disadvantage and not self.advantage else ''}"
                 f", AC: {self.ac_dice_notation}"

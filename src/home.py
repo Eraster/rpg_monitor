@@ -19,28 +19,7 @@ page = st.sidebar.selectbox("Type", ["Home", "History", "Combat", "Battle Tracke
 def home():
     st.title(f"DND 5e campaign monitor")
     st.subheader(f"TODO")
-    st.write(f"""
-    
-    Add method to add new enemys to initiative without reroll.
-    def roll_initiative_for_added_entities(self):
-        raise NotImplementedError()
-    
-    def mutate_initiative_rolls(self):
-        raise NotImplementedError()
-    
-    add possibility to mutate rolls.
-        
-        
-    
-    # @TODO: Always write functions for game manipulations
-    
-    - implement two_handed property
-    Two-Handed. This weapon requires two hands to use. This property is relevant only when you attack with the weapon, not when you simply hold it.
-    - Light weapon
-    When you take the Attack action and attack with a light melee weapon that you're holding in one hand, you can use a bonus action to attack with a different light melee weapon that you're holding in the other hand. You don't add your ability modifier to the damage of the bonus attack, unless that modifier is negative.
-
-
-    """)
+    st.write()
 
 if page == "Home":
     home()

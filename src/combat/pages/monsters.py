@@ -9,7 +9,10 @@ def main_monsters():
 
     if page == '':
         st.title('All Monsters')
-        st.write(PredefinedMonsters.get_monster())
+        for race, enemy in PredefinedMonsters.get_monster().items():
+            st.write(f"""{enemy.description_short()}   
+                 
+            {enemy.description()}""")
 
     elif page in PredefinedMonsters.get_monster():
         monster: Enemy = PredefinedMonsters.get_monster(page)

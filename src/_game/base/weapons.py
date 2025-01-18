@@ -62,11 +62,11 @@ class BaseWeapon:
             description = (
                 f"{self.name}, "
                 f"{self.weapon_type.name}, "
-                f"{self.damage_type.name}, "
                 f"{self.damage_dice}, "
-                f"{[mod.name for mod in self.modifier]!r}, "
+                f"{self.damage_type.name}, "
                 f"Magic: {self.magic_bonus}, "
-                f"{[prop.name for prop in self.properties]!r}"
+                f"{', '.join([mod.name for mod in self.modifier])!r}, "
+                f"{', '.join([prop.name for prop in self.properties])!r}"
             )
         else:
             raise ValueError(f"Description length '{length}' not implemented.")

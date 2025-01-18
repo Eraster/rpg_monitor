@@ -277,8 +277,30 @@ class Entity:
         return base_roll + dex_stats.modifier
 
     def description_short(self):
-        return (f"ID{self.battle_data.entity_id}, {self.race}, AC {self.armor_class}, HP {self.hit_points.current}"
+        return (f"{f'ID{self.battle_data.entity_id}, ' if self.battle_data.entity_id is not None else''}"
+                f"{self.race}, "
+                f"{f'\"{self.name}\", ' if self.name is not None else ''}"
+                f"AC {self.armor_class}, "
+                f"HP {self.hit_points.current}"
                 f"{', DEAD' if self.hit_points.dead else ''}")
+
+    def description(self):
+        text = (f"""
+        {self.race}{f', ID{self.battle_data.entity_id}' if self.battle_data.entity_id is not None else ''} 
+        Base Stats:
+            AC {self.armor_class}
+            HP {self.hit_points.rule_default} ({self.hit_points.rule_rolls})
+            Size {self.size.name}
+            Speed {self.speed}
+        Abilities:
+            {Abilities.STRENGTH.name} {self.ability_scores[Abilities.STRENGTH].modifier}
+            {Abilities.DEXTERITY.name} {self.ability_scores[Abilities.DEXTERITY].modifier}
+            {Abilities.CONSTITUTION.name} {self.ability_scores[Abilities.CONSTITUTION].modifier}
+            {Abilities.INTELLIGENCE.name} {self.ability_scores[Abilities.INTELLIGENCE].modifier}
+            {Abilities.WISDOM.name} {self.ability_scores[Abilities.WISDOM].modifier}
+            {Abilities.CHARISMA.name} {self.ability_scores[Abilities.CHARISMA].modifier}            
+            """)
+        return text
 
     def get_html(self) -> str:
         html = f"<h2>{self.race} {self.name!r} Stats</h2>"

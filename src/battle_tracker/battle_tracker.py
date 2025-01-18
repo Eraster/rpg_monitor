@@ -186,7 +186,15 @@ def main_battle_tracker():
     bt = st.session_state.battle_tracker
 
     # Page Selection
-    pages = ["Set Up Add", "Set Up Alter", "Play Order / Placement", "Battle", "Battlesummary", "Store and Load", "Dice Roll"]
+
+    pages = ["Set Up: Add Entities"]
+    if bt.enemy:
+        pages += ["Set Up: Modify Entities"]
+        pages += ["Set Up: Play Order / Placement"]
+    if bt.turn_order and bt.enemy[0].battle_data.location is not None:
+        pages += ["Battle", "Battlesummary"]
+    pages += ["Store and Load", "Dice Roll"]
+
     st.session_state.battle_tracker_page = st.sidebar.radio('Battle pages:', pages)
     """
     if 'battle_tracker_page' not in st.session_state:
@@ -201,13 +209,13 @@ def main_battle_tracker():
     st.title(f"{st.session_state.battle_tracker_page}")
 
 
-    if st.session_state.battle_tracker_page == "Set Up Add":
+    if st.session_state.battle_tracker_page == "Set Up: Add Entities":
         bt = page_set_up_add(bt)
 
-    if st.session_state.battle_tracker_page == "Set Up Alter":
+    if st.session_state.battle_tracker_page == "Set Up: Modify Entities":
         bt = page_set_up_alter(bt)
 
-    elif st.session_state.battle_tracker_page == "Play Order / Placement":
+    elif st.session_state.battle_tracker_page == "Set Up: Play Order / Placement":
         bt = page_play_order(bt)
 
     elif st.session_state.battle_tracker_page == "Battlesummary":
