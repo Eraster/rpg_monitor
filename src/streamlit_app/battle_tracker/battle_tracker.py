@@ -2,13 +2,13 @@ import streamlit as st
 from itertools import chain
 from copy import deepcopy
 
-from game.base.environment import LocationMetric, Location
-from game.base.weapons import Weapons
-from game.entities.base.action import Action
-from game.entities.base.enemy_base_sheet import Enemy
-from game.entities.entities.monsters import PredefinedMonsters
-from game.base.functionality import roll_dice
-from game.mechanics.battle_tracker import Battletracker
+from src.game.base.environment import LocationMetric, Location
+from src.game.base.weapons import Weapons
+from src.game.entities.base.action import Action
+from src.game.entities.base.enemy_base_sheet import Enemy
+from src.game.entities.entities.monsters import PredefinedMonsters
+from src.game.base.functionality import roll_dice
+from src.game.mechanics.battle_tracker import Battletracker
 
 def page_set_up_add(bt) -> Battletracker:
 
@@ -150,8 +150,10 @@ def page_battle(bt) -> Battletracker:
     action_selection = {str(num) + " " + action.description_prior(): action for num, action in enumerate(actions_flat)}
     selected_action = st.radio("Choose Action:", list(action_selection))
 
-    target_selection = {id: enemy.description_short() for id, enemy in bt.enemy.items()}
-    target_id = st.radio(f"Select Target",[None] + [id for id in bt.enemy])
+    target_selection = {enemy.description_short(): id for id, enemy in bt.enemy.items()}
+    target_selection = {**{'None': None}, **target_selection}
+    target_description = st.radio(f"Select Target", target_selection.keys())
+    target_id = target_selection[target_description]
 
     applied_actions = [None]
     if st.button(f"Execute Action"):

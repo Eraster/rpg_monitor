@@ -277,7 +277,7 @@ class Entity:
         return base_roll + dex_stats.modifier
 
     def description_short(self):
-        return (f"{self.race}, AC {self.armor_class}, HP {self.hit_points.current}"
+        return (f"ID{self.battle_data.entity_id}, {self.race}, AC {self.armor_class}, HP {self.hit_points.current}"
                 f"{', DEAD' if self.hit_points.dead else ''}")
 
     def get_html(self) -> str:
