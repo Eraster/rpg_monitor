@@ -126,11 +126,6 @@ class Battletracker:
                 action_types=action_types
             )
 
-        for action in actions:
-            if action.action_type == ActionType.WEAPON_ATTACK_MELEE:
-                if WeaponProperties.TWO_HANDED in action.weapon.properties:
-                    action.two_handed_attaack = True
-
         return actions
 
     def get_bonus_actions(self,

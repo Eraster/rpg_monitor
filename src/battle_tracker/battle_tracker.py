@@ -4,7 +4,7 @@ from copy import deepcopy
 
 from _game.base.environment import LocationMetric, Location
 from _game.base.weapons import Weapons
-from _game.entities.base.action import Action
+from _game.entities.base.action import Action, ActionType
 from _game.entities.base.enemy_base_sheet import Enemy
 from _game.entities.entities.monsters import PredefinedMonsters
 from _game.base.functionality import roll_dice
@@ -136,6 +136,10 @@ def page_play_order(bt) -> Battletracker:
 def page_battle(bt) -> Battletracker:
     st.write(f"Round: {bt.get_current_round_number()}, Turn: {bt.get_current_turn_number()}")
 
+    if any([True if e.battle_data.location is None else False for e in bt.enemy.values()]):
+        st.warning(f"When using {ActionType.WEAPON_ATTACK_RANGED.name} or {ActionType.WEAPON_ATTACK_THROW.name}, "
+                   f"ensure that every Entity has loaded Locations.")
+
     if st.button("Next Turn"):
         bt.set_next_player()
 
@@ -193,7 +197,7 @@ def main_battle_tracker():
     if bt.enemy:
         pages += ["Set Up: Modify Entities"]
         pages += ["Set Up: Play Order / Placement"]
-    if bt.turn_order and bt.enemy[0].battle_data.location is not None:
+    if bt.turn_order:
         pages += ["Battle", "Battlesummary"]
     pages += ["Store and Load", "Dice Roll"]
 

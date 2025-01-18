@@ -89,9 +89,9 @@ class Action:
             return
 
         if self.ac_roll.total_roll < defender_ac and not self.crit_roll:
-            self.success = True
-        else:
             self.success = False
+        else:
+            self.success = True
 
     def apply_resistance_and_immunity(self, resistances: Set[DamageType] = None, immunities: Set[DamageType] = None):
         if self.target_roll is not None:
