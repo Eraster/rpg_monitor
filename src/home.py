@@ -17,9 +17,13 @@ if "counter" not in st.session_state:
 page = st.sidebar.selectbox("Type", ["Home", "History", "Combat", "Battle Tracker"])
 
 def home():
-    st.title(f"DND 5e campaign monitor")
-    st.subheader(f"TODO")
-    st.write()
+    st.title(f"RPG campaign monitor")
+    st.write("""
+    The following should become support for DM's when playing NPC's.
+    Goal is, to streamline the set up for encounters and the enemy health etc. management.
+    Due to ongoing recalculations it would easily become possible to introduce debuff items such as 
+    "Reduce Intelligence by 2" or equivalent.
+    """)
 
 if page == "Home":
     home()
