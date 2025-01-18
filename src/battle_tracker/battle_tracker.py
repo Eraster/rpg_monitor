@@ -145,7 +145,7 @@ def page_battle(bt) -> Battletracker:
     if bt.current_entity is None:
         return bt
 
-    actions = bt.current_entity.get_actions()
+    actions = bt.get_actions(source=bt.current_entity)
     actions_flat = list(chain(*actions.values()))
     action_selection = {str(num) + " " + action.description_prior(): action for num, action in enumerate(actions_flat)}
     selected_action = st.radio("Choose Action:", list(action_selection))
@@ -162,7 +162,7 @@ def page_battle(bt) -> Battletracker:
 
     for applied_action in applied_actions:
         st.write(applied_action.description_after() if applied_action is not None else "Execute Action for Feedback")
-
+        st.write(applied_action)
     return bt
 
 def page_battle_summary(bt) -> Battletracker:

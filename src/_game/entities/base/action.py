@@ -133,12 +133,14 @@ class Action:
     def description_after(self) -> str:
         ret = f"Turn {self.battle_tracker_turn}, Round {self.battle_tracker_round}"
         ret += f", {self.action_type.name}"
-        if self.action_type == ActionType.WEAPON_ATTACK_MELEE:
+        if self.action_type in {ActionType.WEAPON_ATTACK_MELEE,
+                                ActionType.WEAPON_ATTACK_RANGED,
+                                ActionType.WEAPON_ATTACK_THROW}:
             ret += f", Crit {self.crit_roll}"
             if not self.success:
-                ret += f", FAILED Attack roll {self.ac_roll} not sufficient"
+                ret += f", FAILED Attack roll {self.ac_roll.total_roll} not sufficient"
             else:
-                ret += f", SUCCESS, {self.source_roll.description()})"
+                ret += f", SUCCESS ({self.ac_roll.total_roll}), {self.source_roll.description()})"
                 if self.immunity_applied:
                     ret += f", Immunity applied"
                 elif self.resistance_applied:

@@ -223,8 +223,8 @@ class Entity:
 
 
     def get_actions(self,
-                    current_turn: int = None,
-                    current_round_number: int = None,
+                    current_turn: int,
+                    current_round_number: int,
                     action_types: Optional[Union[ActionType, List[ActionType]]] = None
                     ) -> Dict[ActionType, List[Action]]:
         if action_types is None:
