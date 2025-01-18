@@ -23,6 +23,8 @@ def home():
     Goal is, to streamline the set up for encounters and the enemy health etc. management.
     Due to ongoing recalculations it would easily become possible to introduce debuff items such as 
     "Reduce Intelligence by 2" or equivalent.
+    
+    Check out the Battle Tracker!
     """)
 
 if page == "Home":
