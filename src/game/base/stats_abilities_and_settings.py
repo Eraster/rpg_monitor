@@ -1,11 +1,13 @@
 from enum import Enum, auto
 from typing import Optional
 from dataclasses import dataclass
+import random
 
 
 class WeaponType(Enum):
     SIMPLE = auto()
     MARTIAL = auto()
+    EXOTIC = auto()
 
 class WeaponProperties(Enum):
     FINESSE = auto()

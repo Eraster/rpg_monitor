@@ -72,30 +72,30 @@ class Battletracker:
         self.turn_order = new_order
         self.enemy.pop(enemy_id)
 
-    def roll_initiative_for_all(self):
-        init = [[e.roll_initiative(), e] for e in self.enemy.values()]
+    def _reorder_initiative(self):
+        init = [[e.battle_data.initiative ,e] for e in self.enemy.values()]
         init = sorted(init, key=lambda x: x[0], reverse=True)
 
         i = 0
         for initiative, enemy in init:
-            enemy.battle_data.initiative = initiative
             self.turn_order[i] = enemy
-            i+=1
+            i += 1
+
+    def roll_initiative_for_all(self):
+        for enemy in self.enemy.values():
+            enemy.battle_data.initiative = enemy.roll_initiative()
+        self._reorder_initiative()
 
     def roll_initiative_for_added_entities(self):
-        raise NotImplementedError()
+        for enemy in self.enemy.values():
+            if enemy.battle_data.initiative is None:
+                enemy.battle_data.initiative = enemy.roll_initiative()
+        self._reorder_initiative()
 
-    def mutate_initiative_rolls(self):
-        raise NotImplementedError()
-
-
-    def execute_round_description(self):
-        ret = f"""
-        - get next player
-        - take actions
-        -> attack entity
-        """
-        raise ret
+    def mutate_initiative_rolls(self, initiatives: Dict[int, int]):
+        for id, initiative in initiatives.items():
+            self.enemy[id].battle_data.initiative = initiative
+        self._reorder_initiative()
 
     def get_current_round_number(self) -> int:
         return self.current_round_number

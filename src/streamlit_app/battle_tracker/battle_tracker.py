@@ -6,7 +6,7 @@ from game.base.environment import LocationMetric, Location
 from game.base.weapons import Weapons
 from game.entities.base.action import Action
 from game.entities.base.enemy_base_sheet import Enemy
-from game.entities.entities.monsters import ALL_MONSTERS
+from game.entities.entities.monsters import PredefinedMonsters
 from game.base.functionality import roll_dice
 from game.mechanics.battle_tracker import Battletracker
 
@@ -14,8 +14,8 @@ def page_set_up_add(bt) -> Battletracker:
 
     # Add Enemy
     st.subheader(f"Add Enemies:")
-    added_enemy_name = st.selectbox("Select Enemy:", list(ALL_MONSTERS))
-    add_enemy: Enemy = deepcopy(ALL_MONSTERS[added_enemy_name])
+    added_enemy_name = st.selectbox("Select Enemy:", list(PredefinedMonsters.get_monster()))
+    add_enemy: Enemy = deepcopy(PredefinedMonsters.get_monster(race=added_enemy_name))
 
     cols = st.columns(2)
     if cols[0].button("Add Enemy Base Stats"):
@@ -60,12 +60,37 @@ def page_play_order(bt) -> Battletracker:
 
     # Roll Initiative
     st.subheader("Initiative:")
-    if st.button(f"Roll Initiative"):
-        bt.roll_initiative_for_all()
-    if bt.turn_order:
-        for turn, enemy in bt.turn_order.items():
-            st.write(f"{turn}: ID {enemy.battle_data.entity_id}, Initiative: {enemy.battle_data.initiative}, {enemy.description_short()}")
 
+    cols = st.columns(2)
+    if cols[0].button(f"Roll Initiative (ALL)"):
+        bt.roll_initiative_for_all()
+    if cols[1].button(f"Roll Initiative (Newly added)"):
+        bt.roll_initiative_for_added_entities()
+
+    col_description, col_initiative = st.columns(2)
+
+    col_description.subheader("Entity")
+    col_initiative.subheader("Initiative")
+
+    initiatives = {}
+    for id, enemy in bt.enemy.items():
+        with st.container():
+            col_description, col_initiative = st.columns(2)
+
+            col_description.write(bt.enemy[id].description_short())
+            initiative = col_initiative.number_input(
+                label=f"Init {id}",
+                value=enemy.battle_data.initiative if enemy.battle_data.initiative is not None else 0
+            )
+
+            initiatives[id] = initiative
+
+    if st.button("Process initiative"):
+        if initiatives:
+            bt.mutate_initiative_rolls(initiatives=initiatives)
+            st.write("Data Processed succesfully.")
+        else:
+            st.warning("No data entered.")
 
     # Entity Placement
     st.subheader("Placement:")
@@ -103,21 +128,7 @@ def page_play_order(bt) -> Battletracker:
                 bt.place_enemy(key, x=values['x'], y=values['y'], metric=metric)
             st.write("Data Processed succesfully.")
         else:
-            st.warning("No data entered!")
-
-    return bt
-
-def page_battle_summary(bt) -> Battletracker:
-
-    st.subheader("Enemies")
-    for num, enemy in bt.enemy.items():
-        st.write(f"ID {num},  Enemy {enemy.description_short()}")
-
-    st.subheader("Past Actions")
-    for action in bt.battle_log_actions:
-        st.write(action.description_after())
-
-    st.write(bt.turn_order)
+            st.warning("No data entered.")
 
     return bt
 
@@ -152,6 +163,19 @@ def page_battle(bt) -> Battletracker:
 
     return bt
 
+def page_battle_summary(bt) -> Battletracker:
+
+    st.subheader("Enemies")
+    for num, enemy in bt.enemy.items():
+        st.write(f"ID {num},  Enemy {enemy.description_short()}")
+
+    st.subheader("Past Actions")
+    for action in bt.battle_log_actions:
+        st.write(action.description_after())
+
+    st.write(bt.turn_order)
+
+    return bt
 
 def main_battle_tracker():
 

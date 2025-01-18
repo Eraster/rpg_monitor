@@ -1,17 +1,18 @@
 import streamlit as st
 
-from game.entities.entities.monsters import ALL_MONSTERS
+from game.entities.entities.monsters import PredefinedMonsters
 from game.entities.base.enemy_base_sheet import Enemy
 
 def main_monsters():
-    page = st.sidebar.selectbox("Monster Selection:", ['All'] + list(ALL_MONSTERS.keys()))
 
-    if page == 'All':
+    page = st.sidebar.selectbox("Monster Selection:", [''] + list(PredefinedMonsters.get_monster().keys()))
+
+    if page == '':
         st.title('All Monsters')
-        st.write(ALL_MONSTERS)
+        st.write(PredefinedMonsters.get_monster())
 
-    elif page in ALL_MONSTERS:
-        monster: Enemy = ALL_MONSTERS[page]
+    elif page in PredefinedMonsters.get_monster():
+        monster: Enemy = PredefinedMonsters.get_monster(page)
 
         button_roll_stats = st.button("Roll stats")
         if button_roll_stats:

@@ -46,7 +46,7 @@ class HitPointTracker:
 class BattleTrackerMetaData:
     # This data is never Written directly by the Enemy Class
     entity_id: int = None
-    initiative: int = field(default_factory=lambda: defaultdict(list))
+    initiative: int = None
 
     actions_affected_by: List[Action] = field(default_factory=list)
     actions_taken: List[Action] = field(default_factory=list)
@@ -281,7 +281,7 @@ class Entity:
                 f"{', DEAD' if self.hit_points.dead else ''}")
 
     def get_html(self) -> str:
-        html = f"<h2>{self.race} {self.name}Stats</h2>"
+        html = f"<h2>{self.race} {self.name!r} Stats</h2>"
 
         # Display Important Features
         html += "<table border='1' cellpadding='5'>"

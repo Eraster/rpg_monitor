@@ -74,9 +74,117 @@ class BaseWeapon:
 
 class Weapons:
     all_weapons = {
+        'Bite': 'bite',
+        'Breath Weapon': 'breath_weapon',
+        'Claw': 'claw',
+        'Claws': 'claws',
+        'Eye Ray': 'eye_ray',
+        'Greataxe': 'greataxe',
+        'Greatclub': 'greatclub',
         'Greatsword': 'greatsword',
         'Dagger': 'dagger'
     }
+
+    eye_ray = BaseWeapon(
+        name='Eye Ray',
+        weapon_type=WeaponType.EXOTIC,  # This would be considered an exotic or special weapon
+        damage_dice='4d10',  # Eye rays can deal high damage (example: 4d10)
+        damage_type=DamageType.FORCE,  # Eye rays are often force damage, but could be other types
+        properties=[WeaponProperties.RANGE],  # Eye rays are ranged but not typical weapons
+        magic_bonus=0,  # Eye rays might not have a magic bonus but you could adjust
+        modifier=Abilities.INTELLIGENCE,  # Some creatures use Intelligence for their eye ray attacks
+        two_handed_damage_dice=None,  # Not applicable
+        cost=0,  # No cost, as this is an ability or natural weapon
+        weight=0,
+        range=30,
+        range_disadvantage=30# Eye rays don't have weight
+    )
+
+    greatclub = BaseWeapon(
+        name='Greatclub',
+        weapon_type=WeaponType.MARTIAL,  # Martial weapon, suitable for strong characters
+        damage_dice='1d8',  # Greatclubs deal 1d8 damage
+        damage_type=DamageType.BLUDGEONING,  # Greatclubs deal bludgeoning damage
+        properties=[WeaponProperties.HEAVY, WeaponProperties.TWO_HANDED],  # It is both heavy and requires two hands
+        magic_bonus=0,
+        modifier=Abilities.STRENGTH,  # Uses Strength for attack and damage rolls
+        two_handed_damage_dice='1d10',  # Greatclub deals 1d10 damage when used two-handed
+        cost=2,  # Greatclubs are relatively cheap
+        weight=10  # A greatclub is quite heavy
+    )
+
+    claws = BaseWeapon(
+        name='Claws',
+        weapon_type=WeaponType.SIMPLE,  # This could be SIMPLE as it's a natural weapon
+        damage_dice='1d4',  # Claws typically deal 1d4 damage
+        damage_type=DamageType.SLASHING,  # Claws usually deal slashing damage
+        properties=[WeaponProperties.FINESSE, WeaponProperties.LIGHT],  # Claws are light and finesse weapons
+        magic_bonus=0,
+        modifier=Abilities.STRENGTH,  # Could also use Dexterity if you treat it as a finesse weapon
+        two_handed_damage_dice=None,  # Claws are usually one-handed
+        cost=0,  # No cost for natural weapons
+        weight=0.5  # Very light, as claws are natural weapons
+    )
+
+    bite = BaseWeapon(
+        name='Bite',
+        weapon_type=WeaponType.SIMPLE,  # This could be SIMPLE as it's often a natural weapon
+        damage_dice='1d6',  # Bite typically deals 1d6 damage
+        damage_type=DamageType.PIERCING,  # Bite damage is typically piercing
+        properties=[WeaponProperties.FINESSE],  # Can use Dexterity (finesse)
+        magic_bonus=0,
+        modifier=Abilities.STRENGTH,  # You could modify it to Dexterity if you want it to be finesse
+        two_handed_damage_dice=None,  # Not applicable for a bite
+        cost=0,  # Natural weapon, so no cost
+        weight=0  # Natural weapon with no weight
+    )
+
+    breath_weapon = BaseWeapon(
+        name='Breath Weapon',
+        weapon_type=WeaponType.EXOTIC,  # You can define this as EXOTIC or SPECIAL if it's a unique ability
+        damage_dice='6d6',  # Example: Dragons often deal 6d6 damage with their breath weapon
+        damage_type=DamageType.FIRE,  # This could be FIRE, ACID, COLD, etc. depending on the creature
+        properties=[WeaponProperties.RANGE],  # Breath weapons typically have range but are not a typical weapon
+        magic_bonus=0,
+        modifier=Abilities.DEXTERITY,  # Some creatures use Constitution or another modifier for breath weapons
+        two_handed_damage_dice=None,
+        cost=0,  # No cost, as this is typically a natural ability
+        weight=0,
+        range=15,
+        range_disadvantage=30# Breath weapon has no weight
+    )
+
+    greataxe = BaseWeapon(
+        name='Greataxe',
+        weapon_type=WeaponType.MARTIAL,
+        damage_dice='1d12',
+        damage_type=DamageType.SLASHING,
+        properties=[
+            WeaponProperties.HEAVY,
+            WeaponProperties.TWO_HANDED
+        ],
+        magic_bonus=0,
+        modifier=Abilities.STRENGTH,
+        two_handed_damage_dice='2d12',  # Greataxe does more damage when used two-handed
+        cost=30,
+        weight=7
+    )
+
+    claw = BaseWeapon(
+        name='Claw',
+        weapon_type=WeaponType.MARTIAL,  # You can adjust this to SIMPLE if needed
+        damage_dice='1d6',  # Assuming claws deal 1d6 damage
+        damage_type=DamageType.SLASHING,  # Claws typically deal slashing damage
+        properties=[
+            WeaponProperties.FINESSE,  # Finesse because claws can be used with Dexterity
+            WeaponProperties.LIGHT  # Claws are often light in nature
+        ],
+        magic_bonus=0,
+        modifier=Abilities.STRENGTH,  # You can change it to Dexterity for finesse if needed
+        two_handed_damage_dice=None,  # Not applicable as claws are typically single-handed
+        cost=0,  # Claws are usually natural weapons, so they might be free or have no cost
+        weight=0.5  # Assuming a light natural weapon like claws weighs very little
+    )
 
     greatsword = BaseWeapon(
         name ='Greatsword',
