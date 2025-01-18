@@ -38,8 +38,14 @@ def page_set_up_add(bt) -> Battletracker:
     return bt
 
 def page_set_up_alter(bt) -> Battletracker:
+    if not bt.enemy:
+        st.warning(f"Add enemies prior to mutation.")
+        return bt
+
     # Alter
     st.subheader(f"Select Enemy:")
+
+
     selected_enemy = st.radio(f"Select enemies:", [(enemy_id, enemy.description_short())
                                                    for enemy_id, enemy in bt.enemy.items()])
 
@@ -57,6 +63,9 @@ def page_set_up_alter(bt) -> Battletracker:
     return bt
 
 def page_play_order(bt) -> Battletracker:
+    if not bt.enemy:
+        st.warning(f"Add enemies prior to mutation.")
+        return bt
 
     # Roll Initiative
     st.subheader("Initiative:")
@@ -134,11 +143,18 @@ def page_play_order(bt) -> Battletracker:
     return bt
 
 def page_battle(bt) -> Battletracker:
-    st.write(f"Round: {bt.get_current_round_number()}, Turn: {bt.get_current_turn_number()}")
-
+    if not bt.enemy:
+        st.warning(f"Add enemies prior to mutation.")
+        return bt
+    if not bt.turn_order:
+        st.warning(f"Define Turn Order prior to Action taking.")
+        return bt
     if any([True if e.battle_data.location is None else False for e in bt.enemy.values()]):
-        st.warning(f"When using {ActionType.WEAPON_ATTACK_RANGED.name} or {ActionType.WEAPON_ATTACK_THROW.name}, "
-                   f"ensure that every Entity has loaded Locations.")
+        st.warning(f"Ensure that every Entity has loaded Locations.")
+        return bt
+
+
+    st.write(f"Round: {bt.get_current_round_number()}, Turn: {bt.get_current_turn_number()}")
 
     if st.button("Next Turn"):
         bt.set_next_player()
@@ -168,7 +184,8 @@ def page_battle(bt) -> Battletracker:
 
     for applied_action in applied_actions:
         st.write(applied_action.description_after() if applied_action is not None else "Execute Action for Feedback")
-        st.write(applied_action)
+        if applied_action is not None:
+            st.write(applied_action)
     return bt
 
 def page_battle_summary(bt) -> Battletracker:
@@ -193,24 +210,16 @@ def main_battle_tracker():
 
     # Page Selection
 
-    pages = ["Set Up: Add Entities"]
-    if bt.enemy:
-        pages += ["Set Up: Modify Entities"]
-        pages += ["Set Up: Play Order / Placement"]
-    if bt.turn_order:
-        pages += ["Battle", "Battlesummary"]
-    pages += ["Store and Load", "Dice Roll"]
+    pages = [
+        "Set Up: Add Entities",
+        "Set Up: Modify Entities",
+        "Set Up: Play Order / Placement",
+        "Battle", "Battlesummary",
+        "Store and Load",
+        "Dice Roll"
+    ]
 
     st.session_state.battle_tracker_page = st.sidebar.radio('Battle pages:', pages)
-    """
-    if 'battle_tracker_page' not in st.session_state:
-        st.session_state.battle_tracker_page = "Set Up"
-    
-    cols = st.columns(len(pages))
-    for i, col in enumerate(cols):
-        if col.button(pages[i]):
-            st.session_state.battle_tracker_page = pages[i]
-    """
 
     st.title(f"{st.session_state.battle_tracker_page}")
 

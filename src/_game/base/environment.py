@@ -54,8 +54,9 @@ class Location:
             )
             return new_loc
         else:
-            raise ValueError(f"Metric {self.metric!r} not supported for operator '-'.\n"
-                             f"Supported: {LocationMetric.HEX_BASE_60}")
+            raise ValueError(f"Metric {self.metric} (type {type(LocationMetric.HEX_BASE_60)}) "
+                             f"not supported for operator '-'.\n"
+                             f"Supported: {LocationMetric.HEX_BASE_60} (type {type(LocationMetric.HEX_BASE_60)})")
 
     def __repr__(self) -> str:
         return f"x({self.x}, y({self.y}, metric({self.metric.name}))"
