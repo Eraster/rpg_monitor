@@ -204,6 +204,7 @@ class Entity:
                 attack_dice = ""
 
             action.source_roll_dice_notation = attack_dice
+            action.damage_type = weapon.damage_type
 
             # Append Actions and set values for ranged attacks
             if not WeaponProperties.RANGE in weapon.properties:

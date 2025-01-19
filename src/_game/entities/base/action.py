@@ -3,6 +3,7 @@ from dataclasses import dataclass, field
 from enum import Enum, auto
 from typing import Optional, Union, List, Set
 from copy import deepcopy
+from xml.dom.minidom import Entity
 
 from _game.base.stats_abilities_and_settings import DamageType, WeaponProperties
 from _game.base.functionality import RollInfo
@@ -34,9 +35,12 @@ class Action:
     ac_secondary_roll: Optional[RollInfo] = None
     crit_roll: bool = False
 
-    source: Union['Player', 'Enemy'] = None
-    target: Optional[Union['Player', 'Enemy', List[Union['Player', 'Enemy']]]] = None
+    source: Entity = None
+    target: Optional['Entity'] = None
+
+    primed: bool = False
     success: bool = None
+    executed: bool = False
 
     source_roll_dice_notation: str = None
     source_roll: Optional[RollInfo] = None
@@ -58,7 +62,7 @@ class Action:
     weapon: BaseWeapon = None
     two_handed_attack: bool = False
 
-    action_info: str = "INFO"
+    action_info: str = field(default_factory=list)
 
     def roll_ac(self):
         if self.ac_dice_notation is None:
@@ -114,23 +118,59 @@ class Action:
         else:
             self.immunity_applied = False
 
+    def apply_environment_effects(self):
+        # Apply range disadvantage
+        if self.ranged_attack:
+
+            if self.source.battle_data.enemy_in_melee_range:
+                self.disadvantage = True
+
+            if self.attack_distance is None:
+                self.attack_distance = abs(self.source.battle_data.location - self.target.battle_data.location)
+
+            if self.attack_distance > self.range_disadvantage:
+                self.success = False
+            elif self.attack_distance > self.range:
+                self.disadvantage = True
+
+    def set_attack_distance(self, distance: int):
+        self.attack_distance = distance
+
+    def __copy__(self):
+        copy = deepcopy(self)
+
+        copy.source = self.source
+        copy.target = self.target
+
+        copy.weapon = self.weapon
+
+        return copy
 
     def description_prior(self) -> str:
-        if self.action_type in {
-            ActionType.WEAPON_ATTACK_MELEE,
-            ActionType.WEAPON_ATTACK_RANGED,
-            ActionType.WEAPON_ATTACK_THROW
-        }:
-            return f"{self.action_type.name} " + self.weapon.description_short + (
-                f"{', advantage' if self.advantage and not self.disadvantage else ''}"
-                f"{', disadvantage' if self.disadvantage and not self.advantage else ''}"
-                f", AC: {self.ac_dice_notation}"
-                f"{f', Range ({self.range}/{self.range_disadvantage})' if self.ranged_attack else ''}"
-            )
-        else:
-            raise ValueError(f"{self.action_type} has not implemented description.")
+        ret = f"{self.action_type.name}"
+        if self.weapon:
+            ret += f", {self.weapon.name}"
+        ret += f", Attack: {self.ac_dice_notation}"
+        ret += f", Damage: {self.source_roll_dice_notation}"
+        ret += f", {self.damage_type.name}"
+        ret += f", Range ({self.range}/{self.range_disadvantage})" if self.ranged_attack else ""
+        ret += ", magical" if self.magic else ""
+        return ret
 
-    def description_after(self) -> str:
+    def description_primed(self) -> str:
+        ret = f"{'CRIT ' if self.crit_roll else ''}SUCCESS" if self.success else "FAILED"
+        ret += f", AC: {self.ac_roll.total_roll}"
+        ret += f", Damage: {self.source_roll.total_roll} ({self.source_roll.dice_notation})"
+        ret += f", {self.damage_type.name}"
+        ret += (f", Attacked at range {self.attack_distance} "
+                f"({self.range}/{self.range_disadvantage})") if self.ranged_attack else ""
+        ret += ", magical" if self.magic else ""
+        ret += ", RESISTANCE" if self.resistance_applied and not self.immunity_applied else ""
+        ret += ", IMMUNITY" if self.immunity_applied else ""
+        ret += ", ".join(self.action_info) if self.action_info is not None else ""
+        return ret
+
+    def description_executed(self) -> str:
         ret = f"Turn {self.battle_tracker_turn}, Round {self.battle_tracker_round}"
         ret += f", {self.action_type.name}"
         if self.action_type in {ActionType.WEAPON_ATTACK_MELEE,
@@ -148,29 +188,4 @@ class Action:
                 ret += f", {self.damage_type}"
         return ret
 
-    def apply_environment_effects(self):
-        # Apply range disadvantage
-        if self.ranged_attack:
-            if self.attack_distance is None:
-                self.attack_distance = abs(self.source.battle_data.location - self.target.battle_data.location)
 
-            if self.attack_distance > self.range_disadvantage:
-                self.success = False
-            elif self.attack_distance > self.range:
-                self.disadvantage = True
-
-            if self.source.battle_data.enemy_in_melee_range:
-                self.disadvantage = True
-
-    def set_attack_distance(self, distance: int):
-        self.attack_distance = distance
-
-    def __copy__(self):
-        copy = deepcopy(self)
-
-        copy.source = self.source
-        copy.target = self.target
-
-        copy.weapon = self.weapon
-
-        return copy

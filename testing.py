@@ -23,7 +23,7 @@ if __name__ == '__main__':
 
     action = actions[-1]
 
-    applied_actions = bt.apply_action(action, bt.enemy[1])
+    applied_actions = bt.full_action(action, bt.enemy[1])
 
     print(bt.enemy[0].hit_points)
     print(bt.enemy[1].hit_points)

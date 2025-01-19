@@ -159,9 +159,8 @@ class Battletracker:
             )
         return actions
 
-    def _apply_action(self, action: Action, target: Entity = None) -> Action:
-        # Target and source handled at the end of function
-        action.target = target
+    def _prime_action(self, action: Action) -> Action:
+        action.primed = True
 
         action.apply_environment_effects()
 
@@ -170,54 +169,72 @@ class Battletracker:
             ActionType.WEAPON_ATTACK_RANGED,
             ActionType.WEAPON_ATTACK_THROW
         }:
+
             action.roll_ac()
-            action.check_attack_success(defender_ac=target.armor_class)
+            action.check_attack_success(defender_ac=action.target.armor_class)
 
+            action.roll_source()
+            action.apply_resistance_and_immunity(
+                resistances=action.target.damage_resistances,
+                immunities=action.target.damage_immunity
+            )
+        else:
+            raise ValueError(f"ActionType '{action.action_type}' not recognized. "
+                             f"Implement actionType in {self.__class__.__name__} '_apply_action.'")
+        return action
+
+    def prime_action(self,
+                     action: Action,
+                     targets: Optional[Union[Entity, int, List[Union[Entity, int]]]] = None) -> List[Action]:
+        if targets is None:
+            targets = [None]
+        else:
+            if not isinstance(targets, list):
+                targets = [targets]
+            targets = [t if isinstance(t, Entity) else self.enemy[t] for t in targets]
+
+        primed_actions = []
+        for target in targets:
+            action = copy(action)
+            action.target = target
+            primed_actions.append(self._prime_action(action))
+
+        return primed_actions
+
+    def _execute_action(self, action: Action) -> Action:
+        action.executed = True
+
+        if action.action_type in {
+            ActionType.WEAPON_ATTACK_MELEE,
+            ActionType.WEAPON_ATTACK_RANGED,
+            ActionType.WEAPON_ATTACK_THROW
+        }:
             if action.success:
-                action.roll_source()
-
-                action.apply_resistance_and_immunity(
-                    resistances=target.damage_resistances,
-                    immunities=target.damage_immunity
-                )
-
-                target.hit_points.apply_damage(action.source_roll)
+                action.target.hit_points.apply_damage(action.source_roll)
 
             if action.action_type == ActionType.WEAPON_ATTACK_THROW:
                 drop = action.source.drop_weapon(action.weapon)
-                self.environment.add_drop(drop, location=action.source.battle_data.location)
-
+                self.environment.add_drop(drop, location=action.target.battle_data.location)
         else:
             raise ValueError(f"ActionType '{action.action_type}' not recognized. "
                              f"Implement actionType in {self.__class__.__name__} '_apply_action.'")
 
-        action.target = target
         if action.source is not None:
             action.source.battle_data.actions_taken.append(action)
-        if target is not None:
-            target.battle_data.actions_affected_by.append(action)
+        if action.target is not None:
+            action.target.battle_data.actions_affected_by.append(action)
         self.battle_log_actions.append(action)
         return action
 
-    def apply_action(self,
-                     action: Action,
-                     targets: Optional[Union[Entity, int, List[Union[Entity, int]]]] = None) -> List[Action]:
+    def execute_actions(self, actions: List[Action]) -> List[Action]:
+        return [self._execute_action(action) for action in actions]
 
-        applied_actions = []
-
-        if targets is not None:
-            if not isinstance(targets, list):
-                targets = [targets]
-
-            targets = [t if isinstance(t, Entity) else self.enemy[t] for t in targets]
-
-            for target in targets:
-                applied_actions.append(self._apply_action(copy(action), target=target))
-
-        else:
-            applied_actions.append(self._apply_action(copy(action)))
-
-        return applied_actions
+    def full_action(self,
+                    action: Action,
+                    targets: Optional[Union[Entity, int, List[Union[Entity, int]]]] = None) -> List[Action]:
+        primed_actions = self.prime_action(action, targets)
+        executed_actions = self.execute_actions(primed_actions)
+        return executed_actions
 
     def add_player(self):
         raise NotImplementedError()

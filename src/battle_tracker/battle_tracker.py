@@ -34,9 +34,10 @@ def page_set_up_add_enemy(bt) -> Battletracker:
     st.subheader(f"Remove Enemies:")
     selected_enemy = st.radio(f"Select enemies:", [(enemy_id, enemy.description_short())
                                                    for enemy_id, enemy in bt.enemy.items()])
-    if st.button(f"Remove {selected_enemy}"):
+    if st.button(f"Remove {selected_enemy}", disabled=True if selected_enemy is None else False):
         st.write("Removed selected enemy. (Press any on screen button to view changes.)")
-        bt.remove_entity(selected_enemy[0])
+        if selected_enemy is not None:
+            bt.remove_entity(selected_enemy[0])
 
 
     # Enemy information page
@@ -63,9 +64,10 @@ def page_set_up_alter(bt) -> Battletracker:
 
     weapons = bt.enemy[selected_enemy[0]].weapons
     weapon_name = st.radio(f"Select weapon:", [(i, w.description_short) for i, w in enumerate(weapons)])
-    if st.button("Remove Weapon"):
+    if st.button("Remove Weapon", disabled=True if weapon_name is None else False):
         enemy = bt.enemy[selected_enemy[0]]
-        del enemy.weapons[weapon_name[0]]
+        if weapon_name is not None:
+            del enemy.weapons[weapon_name[0]]
 
     return bt
 
@@ -165,10 +167,15 @@ def page_battle(bt) -> Battletracker:
         button_prev_player = st.button("<- Prev. Turn")
     with col_b:
         button_next_player = st.button("Next Turn ->")
+
     if button_next_player:
         bt.set_next_player()
+        st.session_state.executed_actions = None
+        st.session_state.primed_actions = None
     if button_prev_player:
         bt.set_previous_player()
+        st.session_state.executed_actions = None
+        st.session_state.primed_actions = None
 
     current_entity = bt.get_current_entity()
     if bt.current_entity is None:
@@ -186,38 +193,63 @@ def page_battle(bt) -> Battletracker:
     for turn, entity in bt.get_turn_order():
         st.sidebar.write(f"{turn}, {entity.description_short()}")
 
+
     # Main Selection
-    col1, col2 = st.columns(2)
+    st.markdown("### Action")
+    col_actions, col_targets, col_execute = st.columns(3)
 
     # First column content (Action and Bonus Action)
-    with col1:
-        st.markdown("### Action")
+
+    with col_actions:
         actions = bt.get_actions(source=bt.current_entity)
         actions_flat = list(chain(*actions.values()))
         action_selection = {str(num) + " " + action.description_prior(): action for num, action in
                             enumerate(actions_flat)}
         selected_action = st.radio("Choose Action:", list(action_selection))
 
+    with col_targets:
         target_selection = {enemy.description_short(): id for id, enemy in bt.enemy.items()}
-        target_selection = {**{'None': None}, **target_selection}
         target_description = st.radio(f"Select Target", target_selection.keys())
         target_id = target_selection[target_description]
 
-        applied_actions = [None]
-        if st.button(f"Execute Action"):
-            action: Action = action_selection[selected_action]
-            applied_actions = bt.apply_action(action, target_id)
+        if st.button(f"Prime Action", disabled=True if selected_action is None else False):
+            if selected_action is not None:
+                action: Action = action_selection[selected_action]
+                st.session_state.primed_actions = bt.prime_action(action, target_id)
+                st.session_state.executed_actions = None
 
-        for applied_action in applied_actions:
-            st.write(
-                applied_action.description_after() if applied_action is not None else "Execute Action for Feedback"
-            )
+    with col_execute:
 
-        st.markdown("### Bonus Action")
-        st.markdown("- NotImplemented\n- ...\n- ...\n- ...")
+        if st.session_state.primed_actions is not None:
+
+            st.write("Primed Actions")
+            for action in st.session_state.primed_actions:
+                st.write(action.description_primed())
+
+            st.markdown("Attack Reactions")
+            st.markdown("- Attack of opportunity\n- Shield\n- Held Attack")
+
+            if st.button(f"Execute Action"):
+
+                executed_actions = bt.execute_actions(st.session_state.primed_actions)
+                st.session_state.executed_actions = executed_actions
+                st.session_state.primed_actions = None
+
+        elif st.session_state.executed_actions is not None:
+            st.write("Executed Action")
+            for action in st.session_state.executed_actions:
+                st.write(action.description_executed())
+
+        else:
+            st.warning("Prime Actions")
+
+    st.markdown("### Bonus Action")
+    st.markdown("- NotImplemented\n- ...\n- ...\n- ...")
+
 
     # Second column content (Movement and Reactions)
-    with col2:
+    col_actions, col_targets = st.columns(2)
+    with col_actions:
         st.markdown("### Movement")
 
         new_loc = copy(current_entity.battle_data.location)
@@ -250,26 +282,13 @@ def page_battle(bt) -> Battletracker:
             else:
                 st.warning("No data entered.")
 
+    return bt
 
-
-
-
-
-
-
-
-
-
-
-        st.markdown("### Reactions (Other players)")
-        st.markdown("- Attack of opportunity\n- Shield\n- Held Attack")
-
-    # Summary
-
-    if applied_action is not None:
-        st.write("Applied Action:")
-        st.write(applied_action)
-
+def page_environment(bt) -> Battletracker:
+    for key in bt.environment._environment.keys():
+        st.write(key)
+        for weapon in bt.environment._environment[key]:
+            st.write(f"Weapon: {weapon.name}")
     return bt
 
 def page_battle_summary(bt) -> Battletracker:
@@ -280,7 +299,7 @@ def page_battle_summary(bt) -> Battletracker:
 
     st.subheader("Past Actions")
     for action in bt.battle_log_actions:
-        st.write(action.description_after())
+        st.write(action.description_executed())
 
     st.write(bt.turn_order)
 
@@ -292,6 +311,12 @@ def main_battle_tracker():
         st.session_state.battle_tracker = Battletracker()
     bt = st.session_state.battle_tracker
 
+    if 'primed_actions' not in st.session_state:
+        st.session_state.primed_actions = None
+
+    if 'executed_actions' not in st.session_state:
+        st.session_state.executed_actions = None
+
     # Page Selection
 
     pages = [
@@ -299,7 +324,9 @@ def main_battle_tracker():
         "Set Up: Add Enemy",
         "Set Up: Modify Enemy",
         "Set Up: Play Order / Placement",
-        "Battle", "Battlesummary",
+        "Battle",
+        "Battlesummary",
+        "Environment",
         "Store and Load",
         "Dice Roll"
     ]
@@ -322,6 +349,9 @@ def main_battle_tracker():
 
     elif st.session_state.battle_tracker_page == "Battlesummary":
         bt = page_battle_summary(bt)
+
+    elif st.session_state.battle_tracker_page == "Environment":
+        bt = page_environment(bt)
 
     elif st.session_state.battle_tracker_page == "Battle":
         bt = page_battle(bt)

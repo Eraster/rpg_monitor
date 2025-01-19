@@ -23,7 +23,6 @@ def main_monsters():
 
         # Monster info
         st.markdown(monster.get_html(), unsafe_allow_html=True)
-        st.write(monster.get_html)
 
     else:
         st.title(f"Monster allocation error.")

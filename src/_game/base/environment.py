@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Dict, List
+from typing import Dict, List, Any
 from enum import Enum
 from dataclasses import dataclass, field
 
@@ -58,8 +58,8 @@ class Location:
                              f"not supported for operator '-'.\n"
                              f"Supported: {LocationMetric.HEX_BASE_60} (type {type(LocationMetric.HEX_BASE_60)})")
 
-    def __repr__(self) -> str:
-        return f"x({self.x}, y({self.y}, metric({self.metric.name}))"
+    def key(self) -> str:
+        return f"x({self.x}), y({self.y}), metric({self.metric.name})"
 
     def description(self):
         if self.metric == LocationMetric.HEX_BASE_60:
@@ -71,28 +71,44 @@ class Location:
                            f"The top left hex from the current position has coordinates x = -1, y = 1 though.")
             return explanation
 
+    def get_html(self) -> str:
+        html = f"""
+        <div class='location'>
+            <h2>Location</h2>
+            <ul>
+                <li><strong>X Coordinate:</strong> {self.x}</li>
+                <li><strong>Y Coordinate:</strong> {self.y}</li>
+                <li><strong>Metric:</strong> {self.metric.name}</li>
+            </ul>
+        </div>
+        """
+        return html
+
+
 @dataclass
 class EnvironmentSquare:
     location: Location = None
     weapons: List[BaseWeapon] = field(default_factory=list)
+    undefined: List[Any] = field(default_factory=list)
 
 class Environment:
     def __init__(self):
-        self._environment: Dict[str, EnvironmentSquare] = dict()
+        self._environment: Dict[str, EnvironmentSquare] = {}
         self._default: EnvironmentSquare = EnvironmentSquare()
 
     def get_environment_square(self, location: Location = None):
         if location is None:
             return self._default
-        elif repr(location) in self._environment:
-            return self._environment[repr(location)]
+        elif location.key() in self._environment:
+            return self._environment[location.key()]
         else:
-            new = EnvironmentSquare(location=location)
-            self._environment[repr(Location)] = new
-            return new
+            self._environment[location.key()] = EnvironmentSquare(location=location)
+            return self._environment[location.key()]
 
     def add_drop(self, drop, location: Location = None):
         env = self.get_environment_square(location)
 
         if isinstance(drop, BaseWeapon):
             env.weapons.append(drop)
+        else:
+            env.undefined.append(drop)
