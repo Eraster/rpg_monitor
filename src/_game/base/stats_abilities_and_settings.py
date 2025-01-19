@@ -3,6 +3,10 @@ from typing import Optional
 from dataclasses import dataclass
 
 
+class CharacterType(Enum):
+    PLAYER = auto()
+    ENEMY = auto()
+
 class WeaponType(Enum):
     SIMPLE = auto()
     MARTIAL = auto()

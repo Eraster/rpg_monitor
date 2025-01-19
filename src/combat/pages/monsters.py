@@ -1,7 +1,7 @@
 import streamlit as st
 
 from _game.entities.entities.monsters import PredefinedMonsters
-from _game.entities.base.enemy_base_sheet import Enemy
+from _game.entities.base.entity import Entity
 
 def main_monsters():
 
@@ -15,7 +15,7 @@ def main_monsters():
             {enemy.description()}""")
 
     elif page in PredefinedMonsters.get_monster():
-        monster: Enemy = PredefinedMonsters.get_monster(page)
+        monster: Entity = PredefinedMonsters.get_monster(page)
 
         button_roll_stats = st.button("Roll stats")
         if button_roll_stats:

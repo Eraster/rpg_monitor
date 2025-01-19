@@ -20,9 +20,9 @@ class Location:
     def __abs__(self) -> int:
         if self.metric == LocationMetric.HEX_BASE_60:
             if self.x < 0 < self.y or self.y < 0 < self.x:
-                return min(abs(self.x + self.y), abs(self.x - self.y)) + min(abs(self.x), abs(self.y))
+                return 5 * (min(abs(self.x + self.y), abs(self.x - self.y)) + min(abs(self.x), abs(self.y)))
             else:
-                return abs(self.x) + abs(self.y)
+                return 5 * (abs(self.x) + abs(self.y))
         else:
             raise ValueError(f"Metric {self.metric!r} not supported for operator 'abs'.")
 

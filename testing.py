@@ -7,8 +7,8 @@ from _game.mechanics.battle_tracker import Battletracker
 if __name__ == '__main__':
     bt = Battletracker()
 
-    bt.add_enemy(ALL_MONSTERS['Goblin'])
-    bt.add_enemy(ALL_MONSTERS['Goblin'])
+    bt.add_entity(ALL_MONSTERS['Goblin'])
+    bt.add_entity(ALL_MONSTERS['Goblin'])
 
     bt.enemy[0].add_weapon(weapon=Weapons.get_weapon('Greatsword'))
     bt.enemy[1].add_weapon(weapon=Weapons.get_weapon('Greatsword'))
@@ -16,7 +16,7 @@ if __name__ == '__main__':
     bt.roll_initiative_for_all()
 
     for enemy in bt.enemy.values():
-        bt.place_enemy(enemy, x=1, y=1, metric=LocationMetric.HEX_BASE_60)
+        bt.place_entity(enemy, x=1, y=1, metric=LocationMetric.HEX_BASE_60)
 
     bt.set_next_player()
     actions = bt.current_entity.get_actions()[ActionType.WEAPON_ATTACK_MELEE]

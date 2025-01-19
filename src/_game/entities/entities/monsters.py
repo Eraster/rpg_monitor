@@ -1,6 +1,6 @@
 import random
 
-from _game.entities.base.enemy_base_sheet import Enemy, Skills
+from _game.entities.base.entity import Entity, Skills
 from _game.entities.base.entity import HitPointTracker
 from _game.base.weapons import Weapons
 from _game.base.stats_abilities_and_settings import Size
@@ -53,7 +53,7 @@ def random_name_pick():
     return random.choice(list(name_set))
 
 class PredefinedMonsters:
-    GOBLIN = Enemy(
+    GOBLIN = Entity(
         race='Goblin',
         armor_class=13,
         hit_points=HitPointTracker(
@@ -73,7 +73,7 @@ class PredefinedMonsters:
         weapons=Weapons.dagger
     )
 
-    TROLL = Enemy(
+    TROLL = Entity(
         race='Troll',
         armor_class=15,
         hit_points=HitPointTracker(
@@ -93,7 +93,7 @@ class PredefinedMonsters:
         weapons=Weapons.claw
     )
 
-    ORC = Enemy(
+    ORC = Entity(
         race='Orc',
         armor_class=13,
         hit_points=HitPointTracker(
@@ -113,7 +113,7 @@ class PredefinedMonsters:
         weapons=Weapons.greataxe
     )
 
-    DRAGON = Enemy(
+    DRAGON = Entity(
         race='Dragon',
         armor_class=19,
         hit_points=HitPointTracker(
@@ -133,7 +133,7 @@ class PredefinedMonsters:
         weapons=Weapons.breath_weapon  # Can represent a fire/ice breath weapon
     )
 
-    VAMPIRE = Enemy(
+    VAMPIRE = Entity(
         race='Vampire',
         armor_class=16,
         hit_points=HitPointTracker(
@@ -153,7 +153,7 @@ class PredefinedMonsters:
         weapons=Weapons.bite  # Can represent vampire bite weapon
     )
 
-    GHOUL = Enemy(
+    GHOUL = Entity(
         race='Ghoul',
         armor_class=12,
         hit_points=HitPointTracker(
@@ -173,7 +173,7 @@ class PredefinedMonsters:
         weapons=Weapons.claws
     )
 
-    OGRE = Enemy(
+    OGRE = Entity(
         race='Ogre',
         armor_class=11,
         hit_points=HitPointTracker(
@@ -193,7 +193,7 @@ class PredefinedMonsters:
         weapons=Weapons.greatclub
     )
 
-    MIMIC = Enemy(
+    MIMIC = Entity(
         race='Mimic',
         armor_class=12,
         hit_points=HitPointTracker(
@@ -213,7 +213,7 @@ class PredefinedMonsters:
         weapons=Weapons.bite
     )
 
-    BEHOLDER = Enemy(
+    BEHOLDER = Entity(
         race='Beholder',
         armor_class=18,
         hit_points=HitPointTracker(

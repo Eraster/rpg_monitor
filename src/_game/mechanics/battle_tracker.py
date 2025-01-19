@@ -1,53 +1,52 @@
-from typing import Optional, Union, List, Dict
+from typing import Optional, Union, List, Dict, Tuple
 from copy import copy, deepcopy
 
 from _game.base.environment import Environment, LocationMetric
 from _game.base.stats_abilities_and_settings import WeaponProperties
-from _game.entities.base.player_base_sheet import Player
-from _game.entities.base.enemy_base_sheet import Enemy
+from _game.entities.base.entity import Entity
 from _game.entities.base.action import Action, ActionType
 from _game.base.environment import Location
 
 
 class Battletracker:
     def __init__(self):
-        self.enemy: Dict[int, Enemy] = {}  # Enemy_id: Enemy
-        self.turn_order = {}  # Turn: Enemy
+        self.enemy: Dict[int, Entity] = {}  # Enemy_id: Entity
+        self.turn_order = {}  # Turn: Entity
         self.current_turn = -1
         self.current_round_number = -1
-        self.current_entity: Optional[Union[Enemy, Player]] = None
+        self.current_entity: Optional[Entity] = None
         self.battle_log_actions = []
         self.environment: Environment = Environment()
 
-    def add_enemy(self, enemy: Enemy, roll_health = False):
-        enemy = deepcopy(enemy)
+    def add_entity(self, entity: Entity, roll_health = False):
+        entity = deepcopy(entity)
         if roll_health:
-            enemy.reroll_health_stats()
+            entity.reroll_health_stats()
 
         i = 0
         while i in self.enemy:
             i += 1
-        enemy.battle_data.entity_id = i
-        self.enemy[i] = enemy
+        entity.battle_data.entity_id = i
+        self.enemy[i] = entity
 
-    def place_enemy(self,
-                    enemy: Union[Enemy, int],
-                    x: int,
-                    y: int,
-                    metric: LocationMetric = LocationMetric.HEX_BASE_60) -> None:
+    def place_entity(self,
+                     entity: Union[Entity, int],
+                     x: int,
+                     y: int,
+                     metric: LocationMetric = LocationMetric.HEX_BASE_60) -> None:
 
-        if not isinstance(enemy, int):
-            enemy = enemy.battle_data.entity_id
-        enemy: Enemy = self.enemy[enemy]
+        if not isinstance(entity, int):
+            entity = entity.battle_data.entity_id
+        entity: Entity = self.enemy[entity]
 
         location = Location(x=x, y=y, metric=metric)
-        enemy.battle_data.location=location
+        entity.battle_data.location=location
 
-    def remove_enemy(self, enemy: Union[Enemy, str]):
-        if isinstance(enemy, int):
-            enemy_id = enemy
+    def remove_entity(self, entity: Union[Entity, str]):
+        if isinstance(entity, int):
+            enemy_id = entity
         else:
-            enemy_id = enemy.battle_data.entity_id
+            enemy_id = entity.battle_data.entity_id
 
         turn = 0
         new_order = {}
@@ -86,6 +85,15 @@ class Battletracker:
                 enemy.battle_data.initiative = enemy.roll_initiative()
         self._reorder_initiative()
 
+    def get_turn_order(self) -> List[List[Tuple[int, Entity]]]:
+        ret = [[turn, entity] for turn, entity in self.turn_order.items() if turn >= self.current_turn]
+        turn = 0
+        while turn < self.current_turn:
+            ret.append([turn, self.turn_order[turn]])
+            turn += 1
+        return ret
+
+
     def mutate_initiative_rolls(self, initiatives: Dict[int, int]):
         for id, initiative in initiatives.items():
             self.enemy[id].battle_data.initiative = initiative
@@ -97,7 +105,7 @@ class Battletracker:
     def get_current_turn_number(self) -> int:
         return self.current_turn
 
-    def get_current_entity(self) -> Union[Player, Enemy]:
+    def get_current_entity(self) -> Entity:
         return self.current_entity
 
     def get_enemies(self):
@@ -108,8 +116,13 @@ class Battletracker:
         self.current_round_number = self.current_round_number + 1 if self.current_turn == 0 else self.current_round_number
         self.current_entity = self.turn_order[self.current_turn]
 
+    def set_previous_player(self):
+        self.current_round_number = self.current_round_number if not self.current_turn == 0 else self.current_round_number - 1
+        self.current_turn = self.current_turn - 1 if not self.current_turn == 0 else len(self.turn_order) - 1
+        self.current_entity = self.turn_order[self.current_turn]
+
     def get_actions(self,
-                    source: Optional[Union[Enemy, Player]] = None,
+                    source: Optional[Entity] = None,
                     action_types: Optional[Union[ActionType, List[ActionType]]] = None,
                     allow_all_actions: bool = False
                     ) -> Dict[ActionType, List[Action]]:
@@ -129,9 +142,9 @@ class Battletracker:
         return actions
 
     def get_bonus_actions(self,
-                    source: Optional[Union[Enemy, Player]] = None,
-                    action_types: Optional[Union[ActionType, List[ActionType]]] = None
-                    ) -> Dict[ActionType, List[Action]]:
+                          source: Optional[Entity] = None,
+                          action_types: Optional[Union[ActionType, List[ActionType]]] = None
+                          ) -> Dict[ActionType, List[Action]]:
         if source is not None:
             actions = source.get_bonus_actions(
                 current_turn=self.current_turn,
@@ -146,7 +159,7 @@ class Battletracker:
             )
         return actions
 
-    def _apply_action(self, action: Action, target: Union[Enemy, Player] = None) -> Action:
+    def _apply_action(self, action: Action, target: Entity = None) -> Action:
         # Target and source handled at the end of function
         action.target = target
 
@@ -188,7 +201,7 @@ class Battletracker:
 
     def apply_action(self,
                      action: Action,
-                     targets: Optional[Union[Enemy, Player, int, List[Union[Enemy, Player, int]]]] = None) -> List[Action]:
+                     targets: Optional[Union[Entity, int, List[Union[Entity, int]]]] = None) -> List[Action]:
 
         applied_actions = []
 
@@ -196,7 +209,7 @@ class Battletracker:
             if not isinstance(targets, list):
                 targets = [targets]
 
-            targets = [t if isinstance(t, Enemy) or isinstance(t, Player) else self.enemy[t] for t in targets]
+            targets = [t if isinstance(t, Entity) else self.enemy[t] for t in targets]
 
             for target in targets:
                 applied_actions.append(self._apply_action(copy(action), target=target))

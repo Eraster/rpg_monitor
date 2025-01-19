@@ -1,27 +1,34 @@
 import streamlit as st
 from itertools import chain
-from copy import deepcopy
+from copy import deepcopy, copy
 
 from _game.base.environment import LocationMetric, Location
 from _game.base.weapons import Weapons
 from _game.entities.base.action import Action, ActionType
-from _game.entities.base.enemy_base_sheet import Enemy
+from _game.entities.base.entity import Entity
 from _game.entities.entities.monsters import PredefinedMonsters
 from _game.base.functionality import roll_dice
 from _game.mechanics.battle_tracker import Battletracker
 
-def page_set_up_add(bt) -> Battletracker:
 
-    # Add Enemy
+def page_set_up_add_player(bt) -> Battletracker:
+
+    st.subheader(f"Add Players: Build")
+    st.warning("In Development")
+
+    return bt
+
+def page_set_up_add_enemy(bt) -> Battletracker:
+
     st.subheader(f"Add Enemies:")
     added_enemy_name = st.selectbox("Select Enemy:", list(PredefinedMonsters.get_monster()))
-    add_enemy: Enemy = deepcopy(PredefinedMonsters.get_monster(race=added_enemy_name))
+    add_enemy: Entity = deepcopy(PredefinedMonsters.get_monster(race=added_enemy_name))
 
     cols = st.columns(2)
     if cols[0].button("Add Enemy Base Stats"):
-        bt.add_enemy(add_enemy)
+        bt.add_entity(add_enemy)
     if cols[1].button("Add Enemy Rolled Stats"):
-        bt.add_enemy(add_enemy, roll_health=True)
+        bt.add_entity(add_enemy, roll_health=True)
 
     # Remove
     st.subheader(f"Remove Enemies:")
@@ -29,7 +36,7 @@ def page_set_up_add(bt) -> Battletracker:
                                                    for enemy_id, enemy in bt.enemy.items()])
     if st.button(f"Remove {selected_enemy}"):
         st.write("Removed selected enemy. (Press any on screen button to view changes.)")
-        bt.remove_enemy(selected_enemy[0])
+        bt.remove_entity(selected_enemy[0])
 
 
     # Enemy information page
@@ -62,7 +69,7 @@ def page_set_up_alter(bt) -> Battletracker:
 
     return bt
 
-def page_play_order(bt) -> Battletracker:
+def page_play_order_placement(bt) -> Battletracker:
     if not bt.enemy:
         st.warning(f"Add enemies prior to mutation.")
         return bt
@@ -134,7 +141,7 @@ def page_play_order(bt) -> Battletracker:
     if st.button("Process Data"):
         if placements:
             for key, values in placements.items():
-                bt.place_enemy(key, x=values['x'], y=values['y'], metric=metric)
+                bt.place_entity(key, x=values['x'], y=values['y'], metric=metric)
             st.write("Data Processed succesfully.")
             st.write("Click again to enable 'Battle' Sidebar functionality.")
         else:
@@ -153,39 +160,116 @@ def page_battle(bt) -> Battletracker:
         st.warning(f"Ensure that every Entity has loaded Locations.")
         return bt
 
-
-    st.write(f"Round: {bt.get_current_round_number()}, Turn: {bt.get_current_turn_number()}")
-
-    if st.button("Next Turn"):
+    col_a, col_b = st.columns([1, 1], gap="small")
+    with col_a:
+        button_prev_player = st.button("<- Prev. Turn")
+    with col_b:
+        button_next_player = st.button("Next Turn ->")
+    if button_next_player:
         bt.set_next_player()
+    if button_prev_player:
+        bt.set_previous_player()
 
     current_entity = bt.get_current_entity()
-    if current_entity is not None:
-        st.write(current_entity.description_short())
+    if bt.current_entity is None:
+        st.write(f"Round: {bt.get_current_round_number()}, Turn: {bt.get_current_turn_number()}")
+    else:
+        st.write(f"Round: {bt.get_current_round_number()}, "
+                 f"Turn: {bt.get_current_turn_number()}, "
+                 f"{current_entity.description_short()}")
 
     if bt.current_entity is None:
         st.write(f"Continue with first round for usage.")
         return bt
 
-    actions = bt.get_actions(source=bt.current_entity)
-    actions_flat = list(chain(*actions.values()))
-    action_selection = {str(num) + " " + action.description_prior(): action for num, action in enumerate(actions_flat)}
-    selected_action = st.radio("Choose Action:", list(action_selection))
+    st.sidebar.write("Next turns:")
+    for turn, entity in bt.get_turn_order():
+        st.sidebar.write(f"{turn}, {entity.description_short()}")
 
-    target_selection = {enemy.description_short(): id for id, enemy in bt.enemy.items()}
-    target_selection = {**{'None': None}, **target_selection}
-    target_description = st.radio(f"Select Target", target_selection.keys())
-    target_id = target_selection[target_description]
+    # Main Selection
+    col1, col2 = st.columns(2)
 
-    applied_actions = [None]
-    if st.button(f"Execute Action"):
-        action: Action = action_selection[selected_action]
-        applied_actions = bt.apply_action(action, target_id)
+    # First column content (Action and Bonus Action)
+    with col1:
+        st.markdown("### Action")
+        actions = bt.get_actions(source=bt.current_entity)
+        actions_flat = list(chain(*actions.values()))
+        action_selection = {str(num) + " " + action.description_prior(): action for num, action in
+                            enumerate(actions_flat)}
+        selected_action = st.radio("Choose Action:", list(action_selection))
 
-    for applied_action in applied_actions:
-        st.write(applied_action.description_after() if applied_action is not None else "Execute Action for Feedback")
-        if applied_action is not None:
-            st.write(applied_action)
+        target_selection = {enemy.description_short(): id for id, enemy in bt.enemy.items()}
+        target_selection = {**{'None': None}, **target_selection}
+        target_description = st.radio(f"Select Target", target_selection.keys())
+        target_id = target_selection[target_description]
+
+        applied_actions = [None]
+        if st.button(f"Execute Action"):
+            action: Action = action_selection[selected_action]
+            applied_actions = bt.apply_action(action, target_id)
+
+        for applied_action in applied_actions:
+            st.write(
+                applied_action.description_after() if applied_action is not None else "Execute Action for Feedback"
+            )
+
+        st.markdown("### Bonus Action")
+        st.markdown("- NotImplemented\n- ...\n- ...\n- ...")
+
+    # Second column content (Movement and Reactions)
+    with col2:
+        st.markdown("### Movement")
+
+        new_loc = copy(current_entity.battle_data.location)
+        with st.container():
+            st.markdown("""
+                <style>
+                .stNumberInput label {
+                    display: none;
+                }
+                </style>
+            """, unsafe_allow_html=True)
+
+            colx, coly = st.columns(2)  # Columns for X and Y inputs
+            x_value = colx.number_input(label="X", step=1, label_visibility='hidden')
+            y_value = coly.number_input(label="Y", step=1, label_visibility='hidden')
+
+            new_loc.x = x_value
+            new_loc.y = y_value
+
+            st.write(f"Total: {current_entity.speed}, Minimal target location distance: "
+                     f"{abs(new_loc - current_entity.battle_data.location)}")
+
+        if st.button("Set New Location"):
+            if new_loc:
+                bt.place_entity(current_entity.battle_data.entity_id,
+                                x=new_loc.x,
+                                y=new_loc.y,
+                                metric=new_loc.metric)
+                st.write("Data Processed succesfully.")
+            else:
+                st.warning("No data entered.")
+
+
+
+
+
+
+
+
+
+
+
+
+        st.markdown("### Reactions (Other players)")
+        st.markdown("- Attack of opportunity\n- Shield\n- Held Attack")
+
+    # Summary
+
+    if applied_action is not None:
+        st.write("Applied Action:")
+        st.write(applied_action)
+
     return bt
 
 def page_battle_summary(bt) -> Battletracker:
@@ -211,8 +295,9 @@ def main_battle_tracker():
     # Page Selection
 
     pages = [
-        "Set Up: Add Entities",
-        "Set Up: Modify Entities",
+        "Set Up: Add Players",
+        "Set Up: Add Enemy",
+        "Set Up: Modify Enemy",
         "Set Up: Play Order / Placement",
         "Battle", "Battlesummary",
         "Store and Load",
@@ -223,15 +308,17 @@ def main_battle_tracker():
 
     st.title(f"{st.session_state.battle_tracker_page}")
 
+    if st.session_state.battle_tracker_page == "Set Up: Add Players":
+        bt = page_set_up_add_player(bt)
 
-    if st.session_state.battle_tracker_page == "Set Up: Add Entities":
-        bt = page_set_up_add(bt)
+    if st.session_state.battle_tracker_page == "Set Up: Add Enemy":
+        bt = page_set_up_add_enemy(bt)
 
-    if st.session_state.battle_tracker_page == "Set Up: Modify Entities":
+    if st.session_state.battle_tracker_page == "Set Up: Modify Enemy":
         bt = page_set_up_alter(bt)
 
     elif st.session_state.battle_tracker_page == "Set Up: Play Order / Placement":
-        bt = page_play_order(bt)
+        bt = page_play_order_placement(bt)
 
     elif st.session_state.battle_tracker_page == "Battlesummary":
         bt = page_battle_summary(bt)

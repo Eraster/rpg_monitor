@@ -9,7 +9,7 @@ from _game.entities.base.action import Action
 from _game.base.functionality import roll_dice, empty_set_or_set_of_dataclasses, \
     emtpy_list_or_list_of_dataclasses
 from _game.base.stats_abilities_and_settings import Abilities, Skills, AbilityScoreTracker, SkillScoreTracker, \
-    DamageType, WeaponType, WeaponProperties, Size
+    DamageType, WeaponType, WeaponProperties, Size, CharacterType
 from _game.base.weapons import BaseWeapon
 from _game.entities.base.action import Action, ActionType
 
@@ -79,7 +79,9 @@ class Entity:
                  damage_resistances: Optional[Union[List[DamageType], DamageType]] = None,
                  damage_immunities: Optional[Union[List[DamageType], DamageType]] = None,
                  roll_for_stats=False,
-                 weapons: List[WeaponType] = None):
+                 weapons: List[WeaponType] = None,
+                 character_type: CharacterType = CharacterType.ENEMY):
+        self.character_type = character_type
 
         self.battle_data = BattleTrackerMetaData()
 
@@ -277,7 +279,7 @@ class Entity:
         return base_roll + dex_stats.modifier
 
     def description_short(self):
-        return (f"{f'ID{self.battle_data.entity_id}, ' if self.battle_data.entity_id is not None else''}"
+        return (f"{self.character_type.name} {f'ID{self.battle_data.entity_id}, ' if self.battle_data.entity_id is not None else''}"
                 f"{self.race}, "
                 f"{f'\"{self.name}\", ' if self.name is not None else ''}"
                 f"AC {self.armor_class}, "
@@ -286,7 +288,7 @@ class Entity:
 
     def description(self):
         text = (f"""
-        {self.race}{f', ID{self.battle_data.entity_id}' if self.battle_data.entity_id is not None else ''} 
+        {self.character_type.name} {self.race}{f', ID{self.battle_data.entity_id}' if self.battle_data.entity_id is not None else ''} 
         Base Stats:
             AC {self.armor_class}
             HP {self.hit_points.rule_default} ({self.hit_points.rule_rolls})
