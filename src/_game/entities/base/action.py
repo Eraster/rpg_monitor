@@ -4,6 +4,7 @@ from enum import Enum, auto
 from typing import Optional, Union, List, Set, Any
 from copy import deepcopy
 from xml.dom.minidom import Entity
+from abc import ABC, abstractmethod
 
 from _game.base.stats_abilities_and_settings import DamageType, WeaponProperties
 from _game.base.functionality import RollInfo
@@ -21,24 +22,12 @@ class TargetType(Enum):
     ENVIRONMENT_WEAPON = auto()
 
 @dataclass
-class Action:
-    """
-    Class for Action transfers and evaluation between entities (players, monsters)
-    """
-
+class Action(ABC):
     battle_tracker_turn: int = None
     battle_tracker_round: int = None
 
-    bonus_action: bool = False
     action_type: ActionType = 0
-
-    advantage: bool = False
-    disadvantage: bool = False
-    applied_ac_advantage_disadvantage: bool = False
-    ac_dice_notation: str = None
-    ac_roll: Optional[RollInfo] = None
-    ac_secondary_roll: Optional[RollInfo] = None
-    crit_roll: bool = False
+    bonus_action: bool = False
 
     source: Entity = None
     allowed_target_types: Union[List[TargetType], TargetType] = None
@@ -49,9 +38,63 @@ class Action:
     success: bool = None
     executed: bool = False
 
+    action_info: str = field(default_factory=list)
+
+    @abstractmethod
+    def description_prior(self) -> str:
+        pass
+
+    @abstractmethod
+    def description_primed(self) -> str:
+        pass
+
+    @abstractmethod
+    def description_executed(self) -> str:
+        pass
+
+@dataclass
+class EnvironmentAction(Action):
+    weapon: BaseWeapon = None
+
+    def description_prior(self) -> str:
+        if self.action_type == ActionType.ENVIRONMENT_ACTION_PICK_UP_WEAPON:
+            return "Environment: Pick up Weapon"
+        raise NotImplementedError()
+
+    def description_primed(self) -> str:
+        if self.action_type == ActionType.ENVIRONMENT_ACTION_PICK_UP_WEAPON:
+            if self.target is None:
+                ret = f"Environment: No weapon selected for pick up."
+            else:
+                ret = f"Environment: Pick up {self.target[1]} from Location {self.target[0]}"
+            return ret
+        raise NotImplementedError()
+
+    def description_executed(self) -> str:
+        if self.action_type.ENVIRONMENT_ACTION_PICK_UP_WEAPON:
+            if self.target is None:
+                ret = f"Environment: Picked up nothing from nowhere. Select a weapon first you dingus."
+            else:
+                ret = f"Environment: Picked up {self.target[1]} from Location {self.target[0]}"
+            return ret
+        raise NotImplementedError()
+
+
+@dataclass
+class WeaponAttackAction(Action):
+    """
+    Class for Action transfers and evaluation between entities (players, monsters)
+    """
+    advantage: bool = False
+    disadvantage: bool = False
+    applied_ac_advantage_disadvantage: bool = False
+    ac_dice_notation: str = None
+    ac_roll: Optional[RollInfo] = None
+    ac_secondary_roll: Optional[RollInfo] = None
+    crit_roll: bool = False
+
     source_roll_dice_notation: str = None
     source_roll: Optional[RollInfo] = None
-    target_roll: Optional[RollInfo] = None
 
     magic: bool = None
     magic_damage: int = 0
@@ -64,12 +107,8 @@ class Action:
     range: int = None
     range_disadvantage: int = None
 
-    # SpecialConditions
-    # Possibly moved to separate state class which could be imported from entity.
     weapon: BaseWeapon = None
     two_handed_attack: bool = False
-
-    action_info: str = field(default_factory=list)
 
     def roll_ac(self):
         if self.ac_dice_notation is None:
@@ -105,9 +144,6 @@ class Action:
             self.success = True
 
     def apply_resistance_and_immunity(self, resistances: Set[DamageType] = None, immunities: Set[DamageType] = None):
-        if self.target_roll is not None:
-            raise NotImplementedError(f"Target rolls (i.e. spell damage) not yet implemented.")
-
         if self.resistance_applied is not None:
             raise ValueError(f"Cannot apply resistance twice. Delivered {self.resistance_applied}")
         if self.immunity_applied is not None:
@@ -166,8 +202,6 @@ class Action:
             ret += f", Range ({self.range}/{self.range_disadvantage})" if self.ranged_attack else ""
             ret += ", magical" if self.magic else ""
             return ret
-        elif self.action_type == ActionType.ENVIRONMENT_ACTION_PICK_UP_WEAPON:
-            return "Environment: Pick up Weapon"
         raise NotImplementedError()
 
     def description_primed(self) -> str:
@@ -184,12 +218,6 @@ class Action:
             ret += ", RESISTANCE" if self.resistance_applied and not self.immunity_applied else ""
             ret += ", IMMUNITY" if self.immunity_applied else ""
             ret += ", ".join(self.action_info) if self.action_info is not None else ""
-            return ret
-        elif self.action_type == ActionType.ENVIRONMENT_ACTION_PICK_UP_WEAPON:
-            if self.target is None:
-                ret = f"Environment: No weapon selected for pick up."
-            else:
-                ret = f"Environment: Pick up {self.target[1]} from Location {self.target[0]}"
             return ret
         raise NotImplementedError()
 
@@ -213,12 +241,6 @@ class Action:
                     elif self.resistance_applied:
                         ret += f", Resistance applied"
                     ret += f", {self.damage_type}"
-            return ret
-        elif self.action_type.ENVIRONMENT_ACTION_PICK_UP_WEAPON:
-            if self.target is None:
-                ret = f"Environment: Picked up nothing from nowhere. Select a weapon first you dingus."
-            else:
-                ret = f"Environment: Picked up {self.target[1]} from Location {self.target[0]}"
             return ret
         raise NotImplementedError()
 

@@ -1,4 +1,3 @@
-from collections import defaultdict
 from dataclasses import dataclass, field
 from typing import Optional, List, Union, Dict
 from copy import copy
@@ -6,13 +5,12 @@ import logging
 
 from _game.base.environment import Location
 from _game.base.functionality import roll_dice, RollInfo
-from _game.entities.base.action import Action
-from _game.base.functionality import roll_dice, empty_set_or_set_of_dataclasses, \
+from _game.base.functionality import empty_set_or_set_of_dataclasses, \
     emtpy_list_or_list_of_dataclasses
 from _game.base.stats_abilities_and_settings import Abilities, Skills, AbilityScoreTracker, SkillScoreTracker, \
     DamageType, WeaponType, WeaponProperties, Size, CharacterType
 from _game.base.weapons import BaseWeapon
-from _game.entities.base.action import Action, ActionType, TargetType
+from _game.entities.base.action import Action, ActionType, TargetType, EnvironmentAction, WeaponAttackAction
 
 
 @dataclass
@@ -163,7 +161,7 @@ class Entity:
             drop = self.weapons.pop(weapon_num)
             return drop
 
-    def _get_weapon_attacks(self, base_action: Action, bonus_action = False) -> List[Action]:
+    def _get_weapon_attacks(self, base_action: WeaponAttackAction, bonus_action = False) -> List[Action]:
 
         weapon_attacks = []
         for weapon in self.weapons:
@@ -238,14 +236,15 @@ class Entity:
             action_types = [action_types]
 
         possible_actions: Dict[ActionType, List[Action]] = dict()
-        base_action = Action(
-            battle_tracker_turn=current_turn,
-            battle_tracker_round=current_round_number,
-            source=self
-        )
 
         # Weapon Attacks
-        weapon_attacks = self._get_weapon_attacks(base_action=base_action)
+        weapon_attacks = self._get_weapon_attacks(
+            base_action=WeaponAttackAction(
+                battle_tracker_turn=current_turn,
+                battle_tracker_round=current_round_number,
+                source=self
+            )
+        )
         for attack in weapon_attacks:
             if attack.action_type in action_types:
                 if attack.action_type not in possible_actions:
@@ -255,7 +254,11 @@ class Entity:
 
         # Environments Action Pick Up Weapon
         if ActionType.ENVIRONMENT_ACTION_PICK_UP_WEAPON in action_types:
-            action = copy(base_action)
+            action = EnvironmentAction(
+                battle_tracker_turn=current_turn,
+                battle_tracker_round=current_round_number,
+                source=self
+            )
             action.action_type = ActionType.ENVIRONMENT_ACTION_PICK_UP_WEAPON
             action.allowed_target_types = TargetType.ENVIRONMENT_WEAPON
             possible_actions[ActionType.ENVIRONMENT_ACTION_PICK_UP_WEAPON] = [action]
@@ -273,14 +276,16 @@ class Entity:
             action_types = [action_types]
 
         possible_actions: Dict[ActionType, List[Action]] = dict()
-        base_action = Action(
-            battle_tracker_turn=current_turn,
-            battle_tracker_round=current_round_number,
-            source=self,
+
+        weapon_attacks = self._get_weapon_attacks(
+            base_action=WeaponAttackAction(
+                battle_tracker_turn=current_turn,
+                battle_tracker_round=current_round_number,
+                source=self,
+                bonus_action=True
+            ),
             bonus_action=True
         )
-
-        weapon_attacks = self._get_weapon_attacks(base_action=base_action, bonus_action=True)
         for attack in weapon_attacks:
             if attack.action_type in action_types:
                 if attack.action_type not in possible_actions:

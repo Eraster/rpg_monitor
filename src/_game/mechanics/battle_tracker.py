@@ -2,7 +2,6 @@ from typing import Optional, Union, List, Dict, Tuple, Any
 from copy import copy, deepcopy
 
 from _game.base.environment import Environment, LocationMetric
-from _game.base.stats_abilities_and_settings import WeaponProperties
 from _game.entities.base.entity import Entity
 from _game.entities.base.action import Action, ActionType, TargetType
 from _game.base.environment import Location
@@ -173,13 +172,12 @@ class Battletracker:
     def _prime_action(self, action: Action) -> Action:
         action.primed = True
 
-        action.apply_environment_effects()
-
         if action.action_type in {
             ActionType.WEAPON_ATTACK_MELEE,
             ActionType.WEAPON_ATTACK_RANGED,
             ActionType.WEAPON_ATTACK_THROW
         }:
+            action.apply_environment_effects()
 
             action.roll_ac()
             action.check_attack_success(defender_ac=action.target.armor_class)
