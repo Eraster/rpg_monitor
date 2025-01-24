@@ -1,11 +1,13 @@
-from typing import Optional, Union, List, Dict, Tuple
+from typing import Optional, Union, List, Dict, Tuple, Any
 from copy import copy, deepcopy
 
 from _game.base.environment import Environment, LocationMetric
 from _game.base.stats_abilities_and_settings import WeaponProperties
 from _game.entities.base.entity import Entity
-from _game.entities.base.action import Action, ActionType
+from _game.entities.base.action import Action, ActionType, TargetType
 from _game.base.environment import Location
+
+import streamlit as st
 
 
 class Battletracker:
@@ -44,26 +46,35 @@ class Battletracker:
 
     def remove_entity(self, entity: Union[Entity, str]):
         if isinstance(entity, int):
-            enemy_id = entity
+            entity_id = entity
         else:
-            enemy_id = entity.battle_data.entity_id
+            entity_id = entity.battle_data.entity_id
+
+        # Inherit turn if entity is removed.
+        if self.current_entity is not None and self.current_entity.battle_data.entity_id == entity_id:
+            self.set_next_player()
 
         turn = 0
         new_order = {}
+        enemy_removed = True
         for key, value in self.turn_order.items():
-            if enemy_id == value.battle_data.entity_id:
-                if enemy_id == self.current_entity.battle_data.entity_id:
-                    self.current_entity = None
+
+            if entity_id == value.battle_data.entity_id:
+                enemy_removed = True
                 continue
 
             if key == self.current_turn:
-                self.current_turn = turn
+                if enemy_removed:
+                    self.current_turn -= 1
 
             new_order[turn] = value
             turn += 1
 
+        if self.current_turn == len(new_order):
+            self.current_turn -= 1
+
         self.turn_order = new_order
-        self.enemy.pop(enemy_id)
+        self.enemy.pop(entity_id)
 
     def _reorder_initiative(self):
         init = [[e.battle_data.initiative ,e] for e in self.enemy.values()]
@@ -178,25 +189,54 @@ class Battletracker:
                 resistances=action.target.damage_resistances,
                 immunities=action.target.damage_immunity
             )
+        elif action.action_type.ENVIRONMENT_ACTION_PICK_UP_WEAPON:
+            pass
         else:
             raise ValueError(f"ActionType '{action.action_type}' not recognized. "
                              f"Implement actionType in {self.__class__.__name__} '_apply_action.'")
         return action
 
+    def get_targets(self, target: Union[TargetType, List[TargetType]]):
+        target_types = target if isinstance(target, list) else [target]
+
+        targets = {}
+        if TargetType.ENTITY in target_types:
+            entity_targets = {enemy.description_short(): [TargetType.ENTITY, id] for id, enemy in self.enemy.items()}
+            targets.update(entity_targets)
+        if TargetType.ENVIRONMENT_WEAPON in target_types:
+            environment_weapon_targets = {description: [TargetType.ENVIRONMENT_WEAPON, w_id]
+                                          for description, w_id in self.environment.spot_weapons().items()}
+            targets.update(environment_weapon_targets)
+
+        return targets
+
+    def set_target(self, action: Action, target) -> Action:
+        if target is None:
+            return action
+        target_type, target = target
+
+        action.target_type = target_type
+        if action.target_type == TargetType.ENTITY:
+            action.target = target if isinstance(target, Entity) else self.enemy[target]
+        elif action.target_type == TargetType.ENVIRONMENT_WEAPON:
+            action.target = target
+
+        return action
+
+
     def prime_action(self,
                      action: Action,
-                     targets: Optional[Union[Entity, int, List[Union[Entity, int]]]] = None) -> List[Action]:
+                     targets: Union[List[Tuple[TargetType, Any]], Tuple[TargetType, Any]] = None) -> List[Action]:
         if targets is None:
             targets = [None]
         else:
-            if not isinstance(targets, list):
+            if isinstance(targets[0], TargetType):
                 targets = [targets]
-            targets = [t if isinstance(t, Entity) else self.enemy[t] for t in targets]
 
         primed_actions = []
         for target in targets:
             action = copy(action)
-            action.target = target
+            action = self.set_target(action, target)
             primed_actions.append(self._prime_action(action))
 
         return primed_actions
@@ -215,13 +255,20 @@ class Battletracker:
             if action.action_type == ActionType.WEAPON_ATTACK_THROW:
                 drop = action.source.drop_weapon(action.weapon)
                 self.environment.add_drop(drop, location=action.target.battle_data.location)
+
+        elif action.action_type == ActionType.ENVIRONMENT_ACTION_PICK_UP_WEAPON:
+            if action.target is not None:
+                weapon = self.environment.pick_up_weapon(action.target)
+                if weapon is not None:
+                    action.source.add_weapon(weapon)
+
         else:
             raise ValueError(f"ActionType '{action.action_type}' not recognized. "
                              f"Implement actionType in {self.__class__.__name__} '_apply_action.'")
 
         if action.source is not None:
             action.source.battle_data.actions_taken.append(action)
-        if action.target is not None:
+        if action.target is not None and action.target_type == TargetType.ENTITY:
             action.target.battle_data.actions_affected_by.append(action)
         self.battle_log_actions.append(action)
         return action

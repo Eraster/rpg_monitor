@@ -2,6 +2,7 @@ from collections import defaultdict
 from dataclasses import dataclass, field
 from typing import Optional, List, Union, Dict
 from copy import copy
+import logging
 
 from _game.base.environment import Location
 from _game.base.functionality import roll_dice, RollInfo
@@ -11,7 +12,7 @@ from _game.base.functionality import roll_dice, empty_set_or_set_of_dataclasses,
 from _game.base.stats_abilities_and_settings import Abilities, Skills, AbilityScoreTracker, SkillScoreTracker, \
     DamageType, WeaponType, WeaponProperties, Size, CharacterType
 from _game.base.weapons import BaseWeapon
-from _game.entities.base.action import Action, ActionType
+from _game.entities.base.action import Action, ActionType, TargetType
 
 
 @dataclass
@@ -155,12 +156,12 @@ class Entity:
                 weapon_num = num
 
         if weapon_num is None:
-            raise ValueError(f"Could not drop weapon with name {weapon.name!r}.\n"
-                             f"Available: {[w.name for w in self.weapons]!r}")
+            logging.info(f"Could not drop weapon with name {weapon.name!r}.\n"
+                         f"Available: {[w.name for w in self.weapons]!r}")
+            return None
         else:
             drop = self.weapons.pop(weapon_num)
-
-        return drop
+            return drop
 
     def _get_weapon_attacks(self, base_action: Action, bonus_action = False) -> List[Action]:
 
@@ -171,6 +172,7 @@ class Entity:
 
             action = copy(base_action)
             action.action_type = ActionType.WEAPON_ATTACK_MELEE
+            action.allowed_target_types = TargetType.ENTITY
             action.weapon = weapon
 
             # AC dice
@@ -242,9 +244,21 @@ class Entity:
             source=self
         )
 
-        if ActionType.WEAPON_ATTACK_MELEE in action_types:
-            weapon_attacks = self._get_weapon_attacks(base_action=base_action)
-            possible_actions[ActionType.WEAPON_ATTACK_MELEE] = weapon_attacks
+        # Weapon Attacks
+        weapon_attacks = self._get_weapon_attacks(base_action=base_action)
+        for attack in weapon_attacks:
+            if attack.action_type in action_types:
+                if attack.action_type not in possible_actions:
+                    possible_actions[attack.action_type] = [attack]
+                else:
+                    possible_actions[attack.action_type].append(attack)
+
+        # Environments Action Pick Up Weapon
+        if ActionType.ENVIRONMENT_ACTION_PICK_UP_WEAPON in action_types:
+            action = copy(base_action)
+            action.action_type = ActionType.ENVIRONMENT_ACTION_PICK_UP_WEAPON
+            action.allowed_target_types = TargetType.ENVIRONMENT_WEAPON
+            possible_actions[ActionType.ENVIRONMENT_ACTION_PICK_UP_WEAPON] = [action]
 
         return possible_actions
 
@@ -266,9 +280,13 @@ class Entity:
             bonus_action=True
         )
 
-        if ActionType.WEAPON_ATTACK_MELEE in action_types:
-            weapon_attacks = self._get_weapon_attacks(base_action=base_action, bonus_action=True)
-            possible_actions[ActionType.WEAPON_ATTACK_MELEE] = weapon_attacks
+        weapon_attacks = self._get_weapon_attacks(base_action=base_action, bonus_action=True)
+        for attack in weapon_attacks:
+            if attack.action_type in action_types:
+                if attack.action_type not in possible_actions:
+                    possible_actions[attack.action_type] = [attack]
+                else:
+                    possible_actions[attack.action_type].append(attack)
 
         return possible_actions
 

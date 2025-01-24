@@ -37,8 +37,8 @@ def page_set_up_add_enemy(bt) -> Battletracker:
     if st.button(f"Remove {selected_enemy}", disabled=True if selected_enemy is None else False):
         st.write("Removed selected enemy. (Press any on screen button to view changes.)")
         if selected_enemy is not None:
+            st.write(selected_enemy[0])
             bt.remove_entity(selected_enemy[0])
-
 
     # Enemy information page
     st.markdown(add_enemy.get_html(), unsafe_allow_html=True)
@@ -205,16 +205,20 @@ def page_battle(bt) -> Battletracker:
         actions_flat = list(chain(*actions.values()))
         action_selection = {str(num) + " " + action.description_prior(): action for num, action in
                             enumerate(actions_flat)}
-        selected_action = st.radio("Choose Action:", list(action_selection))
+        selected_action_key = st.radio("Choose Action:", list(action_selection))
+        st.session_state.selected_action = action_selection[selected_action_key]
 
     with col_targets:
-        target_selection = {enemy.description_short(): id for id, enemy in bt.enemy.items()}
+        if st.session_state.selected_action is None:
+            target_selection = {}
+        else:
+            target_selection = bt.get_targets(st.session_state.selected_action.allowed_target_types)
         target_description = st.radio(f"Select Target", target_selection.keys())
-        target_id = target_selection[target_description]
+        target_id = target_selection[target_description] if target_description is not None else None
 
-        if st.button(f"Prime Action", disabled=True if selected_action is None else False):
-            if selected_action is not None:
-                action: Action = action_selection[selected_action]
+        if st.button(f"Prime Action", disabled=True if st.session_state.selected_action is None else False):
+            if st.session_state.selected_action is not None:
+                action: Action = st.session_state.selected_action
                 st.session_state.primed_actions = bt.prime_action(action, target_id)
                 st.session_state.executed_actions = None
 
@@ -310,6 +314,9 @@ def main_battle_tracker():
     if 'battle_tracker' not in st.session_state:
         st.session_state.battle_tracker = Battletracker()
     bt = st.session_state.battle_tracker
+
+    if 'selected_action' not in st.session_state:
+        st.session_state.selected_action = None
 
     if 'primed_actions' not in st.session_state:
         st.session_state.primed_actions = None

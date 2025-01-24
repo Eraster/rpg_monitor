@@ -107,8 +107,45 @@ class Environment:
 
     def add_drop(self, drop, location: Location = None):
         env = self.get_environment_square(location)
+        if drop is None:
+            return
 
         if isinstance(drop, BaseWeapon):
             env.weapons.append(drop)
         else:
             env.undefined.append(drop)
+
+    def spot_weapons(self) -> Dict[str, str]:
+        weapons_def = {w.description_short: [None, w.name]
+                   for w in self._default.weapons}
+        weapons_sqr = {w.description_short: [loc, w.name]
+                   for loc, square in self._environment.items()
+                   for w in square.weapons}
+        weapons_def.update(weapons_sqr)
+        return weapons_def
+
+    def pick_up_weapon(self, weapons_def) -> BaseWeapon:
+        loc, weapon = weapons_def
+
+        if loc is None:
+            location = self._default
+        elif loc in self._environment:
+            location = self._environment[loc]
+
+        weapons = location.weapons
+
+        remaining_weapons = []
+        pick_up = None
+        pick_up_done = False
+        for w in weapons:
+            if weapon == w.name and not pick_up_done:
+                pick_up = w
+                pick_up_done = True
+            else:
+                remaining_weapons.append(w)
+
+        location.weapons = remaining_weapons
+
+        return pick_up
+
+

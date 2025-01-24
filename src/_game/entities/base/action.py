@@ -1,7 +1,7 @@
 from collections import defaultdict
 from dataclasses import dataclass, field
 from enum import Enum, auto
-from typing import Optional, Union, List, Set
+from typing import Optional, Union, List, Set, Any
 from copy import deepcopy
 from xml.dom.minidom import Entity
 
@@ -11,9 +11,14 @@ from _game.base.weapons import Weapons, BaseWeapon
 from _game.base.functionality import roll_dice, RollInfo
 
 class ActionType(Enum):
+    ENVIRONMENT_ACTION_PICK_UP_WEAPON = auto()
     WEAPON_ATTACK_MELEE = auto()
     WEAPON_ATTACK_RANGED = auto()
     WEAPON_ATTACK_THROW = auto()
+
+class TargetType(Enum):
+    ENTITY = auto()
+    ENVIRONMENT_WEAPON = auto()
 
 @dataclass
 class Action:
@@ -36,7 +41,9 @@ class Action:
     crit_roll: bool = False
 
     source: Entity = None
-    target: Optional['Entity'] = None
+    allowed_target_types: Union[List[TargetType], TargetType] = None
+    target: Optional[Any] = None
+    target_type: Optional[TargetType] = None
 
     primed: bool = False
     success: bool = None
@@ -147,45 +154,72 @@ class Action:
         return copy
 
     def description_prior(self) -> str:
-        ret = f"{self.action_type.name}"
-        if self.weapon:
-            ret += f", {self.weapon.name}"
-        ret += f", Attack: {self.ac_dice_notation}"
-        ret += f", Damage: {self.source_roll_dice_notation}"
-        ret += f", {self.damage_type.name}"
-        ret += f", Range ({self.range}/{self.range_disadvantage})" if self.ranged_attack else ""
-        ret += ", magical" if self.magic else ""
-        return ret
-
-    def description_primed(self) -> str:
-        ret = f"{'CRIT ' if self.crit_roll else ''}SUCCESS" if self.success else "FAILED"
-        ret += f", AC: {self.ac_roll.total_roll}"
-        ret += f", Damage: {self.source_roll.total_roll} ({self.source_roll.dice_notation})"
-        ret += f", {self.damage_type.name}"
-        ret += (f", Attacked at range {self.attack_distance} "
-                f"({self.range}/{self.range_disadvantage})") if self.ranged_attack else ""
-        ret += ", magical" if self.magic else ""
-        ret += ", RESISTANCE" if self.resistance_applied and not self.immunity_applied else ""
-        ret += ", IMMUNITY" if self.immunity_applied else ""
-        ret += ", ".join(self.action_info) if self.action_info is not None else ""
-        return ret
-
-    def description_executed(self) -> str:
-        ret = f"Turn {self.battle_tracker_turn}, Round {self.battle_tracker_round}"
-        ret += f", {self.action_type.name}"
         if self.action_type in {ActionType.WEAPON_ATTACK_MELEE,
                                 ActionType.WEAPON_ATTACK_RANGED,
                                 ActionType.WEAPON_ATTACK_THROW}:
-            ret += f", Crit {self.crit_roll}"
-            if not self.success:
-                ret += f", FAILED Attack roll {self.ac_roll.total_roll} not sufficient"
+            ret = f"{self.action_type.name}"
+            if self.weapon:
+                ret += f", {self.weapon.name}"
+            ret += f", Attack: {self.ac_dice_notation}"
+            ret += f", Damage: {self.source_roll_dice_notation}"
+            ret += f", {self.damage_type.name}"
+            ret += f", Range ({self.range}/{self.range_disadvantage})" if self.ranged_attack else ""
+            ret += ", magical" if self.magic else ""
+            return ret
+        elif self.action_type == ActionType.ENVIRONMENT_ACTION_PICK_UP_WEAPON:
+            return "Environment: Pick up Weapon"
+        raise NotImplementedError()
+
+    def description_primed(self) -> str:
+        if self.action_type in {ActionType.WEAPON_ATTACK_MELEE,
+                                ActionType.WEAPON_ATTACK_RANGED,
+                                ActionType.WEAPON_ATTACK_THROW}:
+            ret = f"{'CRIT ' if self.crit_roll else ''}SUCCESS" if self.success else "FAILED"
+            ret += f", AC: {self.ac_roll.total_roll}"
+            ret += f", Damage: {self.source_roll.total_roll} ({self.source_roll.dice_notation})"
+            ret += f", {self.damage_type.name}"
+            ret += (f", Attacked at range {self.attack_distance} "
+                    f"({self.range}/{self.range_disadvantage})") if self.ranged_attack else ""
+            ret += ", magical" if self.magic else ""
+            ret += ", RESISTANCE" if self.resistance_applied and not self.immunity_applied else ""
+            ret += ", IMMUNITY" if self.immunity_applied else ""
+            ret += ", ".join(self.action_info) if self.action_info is not None else ""
+            return ret
+        elif self.action_type == ActionType.ENVIRONMENT_ACTION_PICK_UP_WEAPON:
+            if self.target is None:
+                ret = f"Environment: No weapon selected for pick up."
             else:
-                ret += f", SUCCESS ({self.ac_roll.total_roll}), {self.source_roll.description()})"
-                if self.immunity_applied:
-                    ret += f", Immunity applied"
-                elif self.resistance_applied:
-                    ret += f", Resistance applied"
-                ret += f", {self.damage_type}"
-        return ret
+                ret = f"Environment: Pick up {self.target[1]} from Location {self.target[0]}"
+            return ret
+        raise NotImplementedError()
+
+
+    def description_executed(self) -> str:
+        if self.action_type in {ActionType.WEAPON_ATTACK_MELEE,
+                                ActionType.WEAPON_ATTACK_RANGED,
+                                ActionType.WEAPON_ATTACK_THROW}:
+            ret = f"Turn {self.battle_tracker_turn}, Round {self.battle_tracker_round}"
+            ret += f", {self.action_type.name}"
+            if self.action_type in {ActionType.WEAPON_ATTACK_MELEE,
+                                    ActionType.WEAPON_ATTACK_RANGED,
+                                    ActionType.WEAPON_ATTACK_THROW}:
+                ret += f", Crit {self.crit_roll}"
+                if not self.success:
+                    ret += f", FAILED Attack roll {self.ac_roll.total_roll} not sufficient"
+                else:
+                    ret += f", SUCCESS ({self.ac_roll.total_roll}), {self.source_roll.description()})"
+                    if self.immunity_applied:
+                        ret += f", Immunity applied"
+                    elif self.resistance_applied:
+                        ret += f", Resistance applied"
+                    ret += f", {self.damage_type}"
+            return ret
+        elif self.action_type.ENVIRONMENT_ACTION_PICK_UP_WEAPON:
+            if self.target is None:
+                ret = f"Environment: Picked up nothing from nowhere. Select a weapon first you dingus."
+            else:
+                ret = f"Environment: Picked up {self.target[1]} from Location {self.target[0]}"
+            return ret
+        raise NotImplementedError()
 
 

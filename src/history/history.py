@@ -11,7 +11,7 @@ def main_history():
     if st.button("Only Click as Dungeon Master!!!"):
         st.write(f"""
         
-        - target battle data is still unstable
+        --- debug grabbing weapons from environment
         
         - implement movement action, grapling etc.
         - implement two_handed property properly -> allow entities to select carried weapon
@@ -21,11 +21,16 @@ def main_history():
         - implement action handling (movement, action, bonus action) all separate as step by step todo's
         - implement action suggestion.
         
+        - action pick up weapon: allow only once per turn (or display that it should not be possible anymore)
+        
         
         
         -action costs -> for finesse etc.
         -reactions
         -bonus actions
+        
+        
+        - add mongo db for data storage
         """)
 
 
